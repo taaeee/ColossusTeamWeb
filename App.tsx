@@ -110,7 +110,7 @@ export default function App() {
             Est. 2021 • Competitive Team
           </p>
           <div className="relative h-[200px] w-full flex overflow-hidden">
-           <VideoText src="/logos/l4d2.webm" fontSize={18}>COLOSSUS</VideoText>
+           <VideoText src="/l4d2.webm" fontSize={18}>COLOSSUS</VideoText>
           </div>
 
           <p className="text-zinc-400 max-w-md mx-auto text-sm md:text-base font-light leading-relaxed mb-12">
