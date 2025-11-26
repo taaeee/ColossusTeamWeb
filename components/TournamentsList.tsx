@@ -1,42 +1,22 @@
-import React, { useState } from 'react';
 import { Trophy, Calendar, DollarSign, ArrowUpRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Tournament } from '../types';
+import { getTournaments } from '../services/dataService';
 
-interface Tournament {
-  id: string;
-  name: string;
-  league: string;
-  date: string;
-  prize?: string;
-  result?: string;
-  image: string;
-  status: 'upcoming' | 'past';
-}
-
-const TOURNAMENTS: Tournament[] = [
-  {
-    id: '1',
-    name: 'Lalo World Championship 2025',
-    league: 'Left 4 Dead 2',
-    date: 'May 23 – June 9, 2025',
-    prize: '$1,000,000',
-    image: 'https://picsum.photos/800/450?random=10',
-    status: 'upcoming'
-  },
-  {
-    id: '2',
-    name: 'Another World Cup 2025',
-    league: 'Left 4 Dead 2',
-    date: 'Jan 31 – Feb 11, 2025',
-    result: '1st Place',
-    image: 'https://picsum.photos/800/450?random=11',
-    status: 'past'
-  }
-];
 
 export const TournamentsList: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
 
-  const filteredTournaments = TOURNAMENTS.filter(t => 
+  useEffect(() => {
+    const fetchTournaments = async () => {
+      const data = await getTournaments();
+      setTournaments(data);
+    };
+    fetchTournaments();
+  }, []);
+
+  const filteredTournaments = tournaments.filter(t => 
     filter === 'all' ? true : t.status === filter
   );
 

@@ -9,6 +9,7 @@ export interface TeamMember {
     discord?: string;
     twitch?: string;
     youtube?: string;
+    twitter?: string;
   };
 }
 
@@ -20,7 +21,7 @@ export interface EngagementData {
 }
 
 export interface ChatMessage {
-  id: string;
+  id: number;
   role: 'user' | 'model';
   text: string;
   timestamp: number;
@@ -31,4 +32,34 @@ export enum LoadingState {
   LOADING = 'LOADING',
   SUCCESS = 'SUCCESS',
   ERROR = 'ERROR',
+}
+
+export interface Match {
+  id: number;
+  opponent: string;
+  game: string;
+  league: string;
+  date: string;
+  isLive?: boolean;
+  actionLabel: string;
+}
+
+export interface MatchResult {
+  id: number;
+  opponent: string;
+  game: string;
+  league: string;
+  outcome: 'WIN' | 'LOSS';
+  score: string;
+}
+
+export interface Tournament {
+  id: number;
+  name: string;
+  league: string;
+  date: string;
+  prize?: string;
+  result?: string;
+  image: string;
+  status: 'upcoming' | 'past';
 }

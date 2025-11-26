@@ -9,21 +9,24 @@ import { Menu, X, ChevronDown, ArrowRight } from 'lucide-react';
 import { VideoText } from "@/components/ui/video-text";
 import { ConfigView } from './components/ConfigView';
 import Steam from "./logos/steam.svg?react";
+import { getTeamMembers } from './services/dataService';
 
 
 
 
 export default function App() {
 
-  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<'home' | 'config'>('home');
 
   useEffect(() => {
-    fetch("https://localhost:7166/api/members")
-      .then(res => res.json().then(json => setMembers(json)))
-      .catch(console.error);
+    const loadMembers = async () => {
+      const members = await getTeamMembers();
+      setTeamMembers(members);
+    };
+    loadMembers();
   }, []);
 
 
@@ -165,7 +168,7 @@ export default function App() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {members.map(member => (
+          {teamMembers.map(member => (
             <MemberCard key={member.id} member={member} />
           ))}
         </div>
