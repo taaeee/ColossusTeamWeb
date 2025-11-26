@@ -7,29 +7,29 @@ import { TeamMember, Match, MatchResult, Tournament } from '../types';
 const MOCK_TEAM_MEMBERS: TeamMember[] = [
   {
     id: 1,
-    name: 'VOID',
-    role: 'Sniper / Captain',
-    image: 'https://picsum.photos/600/800?random=1',
-    socials: { twitter: '#', twitch: '#' }
+    name: 'taeyong',
+    role: 'Shotgun / Captain',
+    image: 'https://avatars.fastly.steamstatic.com/f0f3e827431b66c8b602ddb42812581abcbfea43_full.jpg',
+    socials: { steam:'#', discord:'#', kick: '#'}
   },
   {
     id: 2,
-    name: 'ECHO',
-    role: 'Support',
+    name: 'nisha',
+    role: 'Flex / Co-Captain',
     image: 'https://picsum.photos/600/800?random=2',
-    socials: { twitter: '#' }
+    socials: { twitch: '#'  }
   },
   {
     id: 3,
-    name: 'FLUX',
-    role: 'Entry Fragger',
+    name: 'noite',
+    role: 'Smg',
     image: 'https://picsum.photos/600/800?random=3',
-    socials: { twitter: '#', twitch: '#' }
+    socials: { twitch: '#' }
   },
   {
     id: 4,
-    name: 'KAIROS',
-    role: 'Lurker',
+    name: 'jijow',
+    role: 'Smg',
     image: 'https://picsum.photos/600/800?random=4',
     socials: { twitch: '#' }
   }
