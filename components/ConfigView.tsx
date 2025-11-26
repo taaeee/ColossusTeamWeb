@@ -1,6 +1,5 @@
 import React from 'react';
 import { Download, Monitor, Mouse, Keyboard, Headphones, Cpu, Zap, Activity, Disc, Target, FolderOpen, Terminal, CheckCircle, Mic } from 'lucide-react';
-import { File, Folder, Tree } from "@/components/ui/file-tree";
 import { FileTreeDemo } from './FileTreeDemo';
 import { TerminalConfig } from './TerminalConfig';
 
