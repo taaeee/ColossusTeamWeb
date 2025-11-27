@@ -124,34 +124,16 @@ const MOCK_TOURNAMENTS: Tournament[] = [
 // --- API FUNCTIONS ---
 
 export const getTeamMembers = async (): Promise<TeamMember[]> => {
-  if (!supabase) return MOCK_TEAM_MEMBERS;
+  
 
   try {
     const { data, error } = await supabase
-    .from('Members')
-    .select(`
-        id_member,
-        name,
-        role,
-        image,
-        Socials:socials (
-        social_name,
-        social_url
-        )
-    `)
-    .order('name');
-    if (error || !data) throw error;
+    .from('members_with_socials') // o members_with_socials_fixed
+    .select('*');
 
-    return data.map((m: any) => ({
-    id: m.id_member,
-    name: m.name,
-    role: m.role,
-    image: m.image,
-    socials: m.Socials.reduce((acc: any, s: any) => {
-        acc[s.social_name] = s.social_url;
-        return acc;
-    }, {})
-    }));
+    if (error) throw error;
+    console.log(data);
+    return data;
   } catch (error) {
     console.warn('Using mock data for Team Members due to fetch error:', error);
     return MOCK_TEAM_MEMBERS;
