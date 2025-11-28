@@ -77,8 +77,10 @@ export default function App() {
           </div>
 
           <div className="hidden md:flex items-center gap-6">
-             <button className="border border-white/20 px-6 py-2 text-xs tracking-widest hover:bg-white hover:text-black transition-all duration-300">
-               JOIN US
+             <button
+              onClick={() => window.open("https://colossus.games", "_blank")} 
+             className="border border-white/20 px-6 py-2 text-xs tracking-widest hover:bg-white hover:text-black transition-all duration-300">
+               OUR SERVERS
              </button>
           </div>
 

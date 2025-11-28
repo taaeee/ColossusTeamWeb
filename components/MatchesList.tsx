@@ -41,7 +41,7 @@ export const MatchesList: React.FC = () => {
                      <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center text-black font-bold text-xs">
                        C
                      </div>
-                     <span className="text-lg font-bold tracking-widest text-white">COLOSSUS</span>
+                     <span className="text-lg font-bold tracking-widest text-white">Colossus</span>
                   </div>
                   <span className="text-zinc-600 text-sm font-light italic">vs</span>
                   <div className="flex items-center gap-3">
@@ -89,7 +89,7 @@ export const MatchesList: React.FC = () => {
               {/* Left: Teams */}
                <div className="flex items-center gap-6 md:w-1/3">
                   <div className="flex items-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
-                     <span className="text-base font-bold tracking-widest text-white">COLOSSUS</span>
+                     <span className="text-base font-bold tracking-widest text-white">Colossus</span>
                   </div>
                   <span className="text-zinc-700 text-xs">vs</span>
                   <div className="flex items-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
@@ -116,8 +116,10 @@ export const MatchesList: React.FC = () => {
                      <span className="text-xl font-light tracking-widest text-white">{result.score}</span>
                   </div>
                   
-                  <button className="text-zinc-500 hover:text-white transition-colors flex items-center gap-2 text-xs tracking-widest uppercase group/btn">
-                    <span>Watch VOD</span>
+                  <button
+                  onClick={() => window.open(result.url, "_blank")} 
+                  className="text-zinc-500 hover:text-white transition-colors flex items-center gap-2 text-xs tracking-widest uppercase group/btn">
+                    <span>Watch Match</span>
                     <ExternalLink size={12} className="group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
                   </button>
                </div>

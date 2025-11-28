@@ -51,6 +51,7 @@ export interface MatchResult {
   league: string;
   outcome: 'WIN' | 'LOSS';
   score: string;
+  url?: string;
 }
 
 export interface Tournament {

@@ -130,10 +130,9 @@ export const getTeamMembers = async (): Promise<TeamMember[]> => {
     const { data, error } = await supabase
     .from('members_with_socials') // o members_with_socials_fixed
     .select('*');
-
-    if (error) throw error;
-    console.log(data);
+    
     return data;
+
   } catch (error) {
     console.warn('Using mock data for Team Members due to fetch error:', error);
     return MOCK_TEAM_MEMBERS;
@@ -147,8 +146,7 @@ export const getUpcomingMatches = async (): Promise<Match[]> => {
     const { data, error } = await supabase
       .from('matches')
       .select('*')
-      .eq('type', 'upcoming')
-      .order('date');
+      .eq('type', 'upcoming');
 
     if (error || !data) throw error;
 
@@ -158,8 +156,8 @@ export const getUpcomingMatches = async (): Promise<Match[]> => {
       game: m.game,
       league: m.league,
       date: m.date,
-      isLive: m.is_live,
-      actionLabel: m.action_label
+      isLive: m.isLive,
+      actionLabel: m.actionLabel
     }));
   } catch (error) {
     console.warn('Using mock data for Matches due to fetch error:', error);
@@ -171,21 +169,22 @@ export const getMatchResults = async (): Promise<MatchResult[]> => {
   if (!supabase) return MOCK_RESULTS;
 
   try {
-    const { data, error } = await supabase
-      .from('matches')
-      .select('*')
-      .eq('type', 'result')
-      .order('date', { ascending: false });
+  const { data, error } = await supabase
+    .from('MatchResult')
+    .select('*')
+    .order('id', { ascending: false }) // los más nuevos primero
+    .limit(3);
 
     if (error || !data) throw error;
-
+        
     return data.map((m: any) => ({
       id: m.id,
       opponent: m.opponent,
       game: m.game,
       league: m.league,
       outcome: m.outcome,
-      score: m.score
+      score: m.score,
+      url: m.url
     }));
   } catch (error) {
     console.warn('Using mock data for Results due to fetch error:', error);
