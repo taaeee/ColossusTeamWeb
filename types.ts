@@ -42,6 +42,7 @@ export interface Match {
   date: string;
   isLive?: boolean;
   actionLabel: string;
+  url?: string;
 }
 
 export interface MatchResult {

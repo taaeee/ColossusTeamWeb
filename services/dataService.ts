@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { TeamMember, Match, MatchResult, Tournament } from '../types';
+import { url } from 'inspector';
 
 // --- MOCK DATA FALLBACKS ---
 // These are used if the Supabase connection is missing or fails.
@@ -43,7 +44,8 @@ const MOCK_UPCOMING: Match[] = [
     league: 'Valorant Champions Tour', 
     date: 'Today at 8:00 PM EST', 
     isLive: true,
-    actionLabel: 'WATCH LIVE' 
+    actionLabel: 'WATCH LIVE', 
+    url: 'https://www.youtube.com/@ColossusPOV'
   },
   { 
     id: 2, 
@@ -51,7 +53,10 @@ const MOCK_UPCOMING: Match[] = [
     game: 'LEAGUE OF LEGENDS', 
     league: 'LCS Championship', 
     date: 'Tomorrow at 6:00 PM EST', 
-    actionLabel: 'DETAILS' 
+    isLive: false,
+    actionLabel: 'DETAILS',
+    url: 'https://www.youtube.com/@ColossusPOV' 
+    
   },
 ];
 
@@ -144,9 +149,11 @@ export const getUpcomingMatches = async (): Promise<Match[]> => {
 
   try {
     const { data, error } = await supabase
-      .from('matches')
+      .from('Matches')
       .select('*')
-      .eq('type', 'upcoming');
+      .order('id', { ascending: false }) // los más nuevos primero
+      .limit(3);
+      
 
     if (error || !data) throw error;
 
@@ -157,7 +164,8 @@ export const getUpcomingMatches = async (): Promise<Match[]> => {
       league: m.league,
       date: m.date,
       isLive: m.isLive,
-      actionLabel: m.actionLabel
+      actionLabel: m.actionLabel,
+      url: m.url
     }));
   } catch (error) {
     console.warn('Using mock data for Matches due to fetch error:', error);

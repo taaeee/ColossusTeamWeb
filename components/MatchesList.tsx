@@ -62,7 +62,9 @@ export const MatchesList: React.FC = () => {
                       {match.date}
                     </div>
                   </div>
-                  <button className={`px-6 py-3 border text-xs tracking-[0.2em] font-medium transition-all duration-300 flex items-center gap-2 ${
+                  <button
+                  onClick={() => window.open(match.url, "_blank")} 
+                  className={`px-6 py-3 border text-xs tracking-[0.2em] font-medium transition-all duration-300 flex items-center gap-2 ${
                     match.isLive 
                     ? 'bg-red-600 border-red-600 text-white hover:bg-red-700 hover:border-red-700 shadow-[0_0_15px_rgba(220,38,38,0.5)]' 
                     : 'border-white/20 text-white hover:bg-white hover:text-black'
