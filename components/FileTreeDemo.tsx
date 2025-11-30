@@ -1,4 +1,4 @@
-import { File, Folder, Tree } from "@/components/ui/file-tree"
+import { File, Folder, Tree } from "@/components/ui/file-tree";
 
 export function FileTreeDemo() {
   return (
@@ -6,14 +6,7 @@ export function FileTreeDemo() {
       <Tree
         className="bg-background overflow-hidden rounded-md p-2"
         initialSelectedId="7"
-        initialExpandedItems={[
-          "1",
-          "2",
-          "3",
-          "4",
-          "5",
-          "6"
-        ]}
+        initialExpandedItems={["1", "2", "3", "4", "5", "6"]}
         elements={ELEMENTS}
       >
         <Folder element="left4dead2" value="1">
@@ -26,15 +19,14 @@ export function FileTreeDemo() {
             </File>
           </Folder>
           <Folder value="5" element="cfg">
-
-              <File value="6">
-                <p>autoexec.cfg</p>
-              </File>
+            <File value="6">
+              <p>autoexec.cfg</p>
+            </File>
           </Folder>
         </Folder>
       </Tree>
     </div>
-  )
+  );
 }
 
 const ELEMENTS = [
@@ -69,9 +61,9 @@ const ELEMENTS = [
             id: "6",
             isSelectable: true,
             name: "autoexec.cfg",
-          }
+          },
         ],
-      }
+      },
     ],
   },
-]
+];

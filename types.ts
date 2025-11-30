@@ -1,3 +1,28 @@
+export interface MemberConfig {
+  gear: {
+    monitor: string;
+    mouse: string;
+    keyboard: string;
+    headset: string;
+    mousepad: string;
+  };
+  pc: {
+    cpu: string;
+    gpu: string;
+    ram: string;
+  };
+  settings: {
+    dpi: number;
+    sensitivity: number;
+    edpi: number;
+    pollingRate: string;
+    resolution: string;
+    aspectRatio: string;
+    refreshRate: string;
+    crosshairCode: string;
+  };
+}
+
 export interface TeamMember {
   id: number;
   name: string;
@@ -11,6 +36,7 @@ export interface TeamMember {
     youtube?: string;
     twitter?: string;
   };
+  config?: MemberConfig;
 }
 
 export interface EngagementData {
@@ -22,16 +48,16 @@ export interface EngagementData {
 
 export interface ChatMessage {
   id: number;
-  role: 'user' | 'model';
+  role: "user" | "model";
   text: string;
   timestamp: number;
 }
 
 export enum LoadingState {
-  IDLE = 'IDLE',
-  LOADING = 'LOADING',
-  SUCCESS = 'SUCCESS',
-  ERROR = 'ERROR',
+  IDLE = "IDLE",
+  LOADING = "LOADING",
+  SUCCESS = "SUCCESS",
+  ERROR = "ERROR",
 }
 
 export interface Match {
@@ -50,7 +76,7 @@ export interface MatchResult {
   opponent: string;
   game: string;
   league: string;
-  outcome: 'WIN' | 'LOSS';
+  outcome: "WIN" | "LOSS";
   score: string;
   url?: string;
 }
@@ -63,5 +89,5 @@ export interface Tournament {
   prize?: string;
   result?: string;
   image: string;
-  status: 'upcoming' | 'past';
+  status: "upcoming" | "past";
 }

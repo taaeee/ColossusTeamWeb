@@ -1,146 +1,118 @@
-import { supabase } from './supabaseClient';
-import { TeamMember, Match, MatchResult, Tournament } from '../types';
-import { url } from 'inspector';
+import { supabase } from "./supabaseClient";
+import { TeamMember, Match, MatchResult, Tournament } from "../types";
+import { url } from "inspector";
 
 // --- MOCK DATA FALLBACKS ---
 // These are used if the Supabase connection is missing or fails.
 
-const MOCK_TEAM_MEMBERS: TeamMember[] = [
+const MOCK_UPCOMING: Match[] = [
   {
     id: 1,
-    name: 'taeyong',
-    role: 'Shotgun / Captain',
-    image: 'https://avatars.fastly.steamstatic.com/f0f3e827431b66c8b602ddb42812581abcbfea43_full.jpg',
-    socials: { steam:'#', discord:'#', kick: '#'}
+    opponent: "FAZE CLAN",
+    game: "VALORANT",
+    league: "Valorant Champions Tour",
+    date: "Today at 8:00 PM EST",
+    isLive: true,
+    actionLabel: "WATCH LIVE",
+    url: "https://www.youtube.com/@ColossusPOV",
   },
   {
     id: 2,
-    name: 'nisha',
-    role: 'Flex / Co-Captain',
-    image: 'https://picsum.photos/600/800?random=2',
-    socials: { twitch: '#'  }
-  },
-  {
-    id: 3,
-    name: 'noite',
-    role: 'Smg',
-    image: 'https://picsum.photos/600/800?random=3',
-    socials: { twitch: '#' }
-  },
-  {
-    id: 4,
-    name: 'jijow',
-    role: 'Smg',
-    image: 'https://picsum.photos/600/800?random=4',
-    socials: { twitch: '#' }
-  }
-];
-
-const MOCK_UPCOMING: Match[] = [
-  { 
-    id: 1, 
-    opponent: 'FAZE CLAN', 
-    game: 'VALORANT', 
-    league: 'Valorant Champions Tour', 
-    date: 'Today at 8:00 PM EST', 
-    isLive: true,
-    actionLabel: 'WATCH LIVE', 
-    url: 'https://www.youtube.com/@ColossusPOV'
-  },
-  { 
-    id: 2, 
-    opponent: 'TEAM LIQUID', 
-    game: 'LEAGUE OF LEGENDS', 
-    league: 'LCS Championship', 
-    date: 'Tomorrow at 6:00 PM EST', 
+    opponent: "TEAM LIQUID",
+    game: "LEAGUE OF LEGENDS",
+    league: "LCS Championship",
+    date: "Tomorrow at 6:00 PM EST",
     isLive: false,
-    actionLabel: 'DETAILS',
-    url: 'https://www.youtube.com/@ColossusPOV' 
-    
+    actionLabel: "DETAILS",
+    url: "https://www.youtube.com/@ColossusPOV",
   },
 ];
 
 const MOCK_RESULTS: MatchResult[] = [
-  { 
-    id: 3, 
-    opponent: 'OPTIC GAMING', 
-    game: 'VALORANT', 
-    league: 'VCT Masters Copenhagen', 
-    outcome: 'WIN', 
-    score: '2 - 1' 
+  {
+    id: 3,
+    opponent: "OPTIC GAMING",
+    game: "VALORANT",
+    league: "VCT Masters Copenhagen",
+    outcome: "WIN",
+    score: "2 - 1",
   },
-  { 
-    id: 4, 
-    opponent: 'G2 ESPORTS', 
-    game: 'CS:GO', 
-    league: 'IEM Cologne 2023', 
-    outcome: 'LOSS', 
-    score: '0 - 2' 
+  {
+    id: 4,
+    opponent: "G2 ESPORTS",
+    game: "CS:GO",
+    league: "IEM Cologne 2023",
+    outcome: "LOSS",
+    score: "0 - 2",
   },
-  { 
-    id: 5, 
-    opponent: 'T1', 
-    game: 'LEAGUE OF LEGENDS', 
-    league: 'Worlds 2023', 
-    outcome: 'WIN', 
-    score: '3 - 2' 
+  {
+    id: 5,
+    opponent: "T1",
+    game: "LEAGUE OF LEGENDS",
+    league: "Worlds 2023",
+    outcome: "WIN",
+    score: "3 - 2",
   },
 ];
 
 const MOCK_TOURNAMENTS: Tournament[] = [
   {
     id: 1,
-    name: 'VCT 2025: Masters Shanghai',
-    league: 'VALORANT Champions Tour',
-    date: 'May 23 – June 9, 2025',
-    prize: '$1,000,000',
-    image: 'https://picsum.photos/800/450?random=10',
-    status: 'upcoming'
+    name: "VCT 2025: Masters Shanghai",
+    league: "VALORANT Champions Tour",
+    date: "May 23 – June 9, 2025",
+    prize: "$1,000,000",
+    image: "https://picsum.photos/800/450?random=10",
+    status: "upcoming",
   },
   {
     id: 2,
-    name: 'IEM Katowice 2025',
-    league: 'Intel Extreme Masters',
-    date: 'Jan 31 – Feb 11, 2025',
-    result: '1st Place',
-    image: 'https://picsum.photos/800/450?random=11',
-    status: 'past'
+    name: "IEM Katowice 2025",
+    league: "Intel Extreme Masters",
+    date: "Jan 31 – Feb 11, 2025",
+    result: "1st Place",
+    image: "https://picsum.photos/800/450?random=11",
+    status: "past",
   },
   {
     id: 3,
-    name: 'Spring Groups 2025',
-    league: 'BLAST Premier',
-    date: 'Jan 22 – Jan 28, 2025',
-    result: 'Top 8',
-    image: 'https://picsum.photos/800/450?random=12',
-    status: 'past'
+    name: "Spring Groups 2025",
+    league: "BLAST Premier",
+    date: "Jan 22 – Jan 28, 2025",
+    result: "Top 8",
+    image: "https://picsum.photos/800/450?random=12",
+    status: "past",
   },
   {
     id: 4,
-    name: 'OWCS Dallas Major',
-    league: 'Overwatch Champions Series',
-    date: 'May 31 - June 2, 2025',
-    prize: '$300,000',
-    image: 'https://picsum.photos/800/450?random=13',
-    status: 'upcoming'
-  }
+    name: "OWCS Dallas Major",
+    league: "Overwatch Champions Series",
+    date: "May 31 - June 2, 2025",
+    prize: "$300,000",
+    image: "https://picsum.photos/800/450?random=13",
+    status: "upcoming",
+  },
 ];
 
 // --- API FUNCTIONS ---
 
 export const getTeamMembers = async (): Promise<TeamMember[]> => {
-  
-
   try {
     const { data, error } = await supabase
-    .from('members_with_socials') // o members_with_socials_fixed
-    .select('*');
-    
-    return data;
-
+      .from("members_with_socials_and_config") // o members_with_socials_fixed
+      .select("*");
+    console.log(data);
+    return data.map((m: any) => ({
+      id: m.id,
+      name: m.name,
+      role: m.role,
+      image: m.image,
+      socials: m.socials,
+      config: m.config,
+    }));
   } catch (error) {
-    console.warn('Using mock data for Team Members due to fetch error:', error);
-    return MOCK_TEAM_MEMBERS;
+    console.warn("Using mock data for Team Members due to fetch error:", error);
+    return []; // Return empty array or mock data if needed
   }
 };
 
@@ -149,11 +121,10 @@ export const getUpcomingMatches = async (): Promise<Match[]> => {
 
   try {
     const { data, error } = await supabase
-      .from('Matches')
-      .select('*')
-      .order('id', { ascending: false }) // los más nuevos primero
+      .from("Matches")
+      .select("*")
+      .order("id", { ascending: false }) // los más nuevos primero
       .limit(3);
-      
 
     if (error || !data) throw error;
 
@@ -165,10 +136,10 @@ export const getUpcomingMatches = async (): Promise<Match[]> => {
       date: m.date,
       isLive: m.isLive,
       actionLabel: m.actionLabel,
-      url: m.url
+      url: m.url,
     }));
   } catch (error) {
-    console.warn('Using mock data for Matches due to fetch error:', error);
+    console.warn("Using mock data for Matches due to fetch error:", error);
     return MOCK_UPCOMING;
   }
 };
@@ -177,14 +148,14 @@ export const getMatchResults = async (): Promise<MatchResult[]> => {
   if (!supabase) return MOCK_RESULTS;
 
   try {
-  const { data, error } = await supabase
-    .from('MatchResult')
-    .select('*')
-    .order('id', { ascending: false }) // los más nuevos primero
-    .limit(3);
+    const { data, error } = await supabase
+      .from("MatchResult")
+      .select("*")
+      .order("id", { ascending: false }) // los más nuevos primero
+      .limit(3);
 
     if (error || !data) throw error;
-        
+
     return data.map((m: any) => ({
       id: m.id,
       opponent: m.opponent,
@@ -192,10 +163,10 @@ export const getMatchResults = async (): Promise<MatchResult[]> => {
       league: m.league,
       outcome: m.outcome,
       score: m.score,
-      url: m.url
+      url: m.url,
     }));
   } catch (error) {
-    console.warn('Using mock data for Results due to fetch error:', error);
+    console.warn("Using mock data for Results due to fetch error:", error);
     return MOCK_RESULTS;
   }
 };
@@ -205,9 +176,9 @@ export const getTournaments = async (): Promise<Tournament[]> => {
 
   try {
     const { data, error } = await supabase
-      .from('tournaments')
-      .select('*')
-      .order('date', { ascending: false });
+      .from("tournaments")
+      .select("*")
+      .order("date", { ascending: false });
 
     if (error || !data) throw error;
 
@@ -219,10 +190,10 @@ export const getTournaments = async (): Promise<Tournament[]> => {
       prize: t.prize,
       result: t.result,
       image: t.image,
-      status: t.status
+      status: t.status,
     }));
   } catch (error) {
-    console.warn('Using mock data for Tournaments due to fetch error:', error);
+    console.warn("Using mock data for Tournaments due to fetch error:", error);
     return MOCK_TOURNAMENTS;
   }
 };
