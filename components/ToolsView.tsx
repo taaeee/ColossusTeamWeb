@@ -106,7 +106,7 @@ cl_crosshair_dynamic ${config.dynamic ? "1" : "0"}`;
         {/* Visualizer */}
         <div className="border border-white/10 bg-black h-[400px] relative overflow-hidden flex items-center justify-center group">
           {/* Background Simulation */}
-          <div className="absolute inset-0 bg-[url('https://picsum.photos/800/800?grayscale')] opacity-20 bg-cover bg-center" />
+          <div className="absolute inset-0 bg-[url('https://images.steamusercontent.com/ugc/155777414512870846/DB6BE3E2C4F342869CBB140D28DE330DD90C35A1/?imw=637&imh=358&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=true')] opacity-20 bg-cover bg-center" />
           <div className="absolute inset-0 bg-radial-gradient from-transparent to-black/80" />
 
           {/* The Crosshair Container */}
