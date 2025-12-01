@@ -8,6 +8,7 @@ import { TeamMember } from "./types";
 import { Menu, X, ChevronDown, ArrowRight } from "lucide-react";
 import { VideoText } from "@/components/ui/video-text";
 import { ConfigView } from "./components/ConfigView";
+import { ToolsView } from "./components/ToolsView";
 import Steam from "./logos/steam.svg?react";
 import { getTeamMembers } from "./services/dataService";
 
@@ -15,7 +16,9 @@ export default function App() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState<"home" | "config">("home");
+  const [currentPage, setCurrentPage] = useState<"home" | "config" | "tools">(
+    "home"
+  );
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
 
   useEffect(() => {
@@ -34,7 +37,10 @@ export default function App() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navigateTo = (page: "home" | "config", sectionId?: string) => {
+  const navigateTo = (
+    page: "home" | "config" | "tools",
+    sectionId?: string
+  ) => {
     setCurrentPage(page);
     setMobileMenuOpen(false);
 
@@ -98,12 +104,12 @@ export default function App() {
               TOURNAMENTS
             </button>
             <button
-              onClick={() => navigateTo("config")}
-              className={`transition-colors ${
-                currentPage === "config" ? "text-white" : "hover:text-white"
+              onClick={() => navigateTo("tools")}
+              className={`hover:text-white transition-colors ${
+                currentPage === "tools" ? "text-white font-medium" : ""
               }`}
             >
-              CONFIG
+              TOOLS
             </button>
             <button
               onClick={() => navigateTo("home", "contact")}
@@ -143,7 +149,7 @@ export default function App() {
             <button onClick={() => navigateTo("home", "tournaments")}>
               TOURNAMENTS
             </button>
-            <button onClick={() => navigateTo("config")}>CONFIG</button>
+            <button onClick={() => navigateTo("tools")}>TOOLS</button>
             <button onClick={() => navigateTo("home", "contact")}>
               CONTACT
             </button>
@@ -276,6 +282,8 @@ export default function App() {
               </div>
             </section>
           </>
+        ) : currentPage === "tools" ? (
+          <ToolsView />
         ) : (
           <ConfigView
             member={selectedMember}
