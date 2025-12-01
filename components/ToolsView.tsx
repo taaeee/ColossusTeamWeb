@@ -132,7 +132,9 @@ cl_crosshair_dynamic ${config.dynamic ? "1" : "0"}`;
               className={`absolute w-(--len) h-(--th) bg-(--col) left-6/12 top-1/2 -translate-y-1/2 origin-right shadow-(--shadow) ${
                 config.dynamic ? "animate-spread-left" : ""
               }`}
-              style={{ transform: "translate(calc(-100% - var(--gap)), -50%)" }}
+              style={{
+                transform: "translate(calc(-120% - var(--gap)), -50%)",
+              }}
             />
 
             {/* Right Bar */}
@@ -295,8 +297,8 @@ cl_crosshair_dynamic ${config.dynamic ? "1" : "0"}`;
           50% { transform: translate(-50%, calc(var(--gap) + var(--spread))); }
         }
         @keyframes spread-left {
-          0%, 100% { transform: translate(calc(-100% - var(--gap)), -50%); }
-          50% { transform: translate(calc(-100% - var(--gap) - var(--spread)), -50%); }
+          0%, 100% { transform: translate(calc(-120% - var(--gap)), -50%); }
+          50% { transform: translate(calc(-120% - var(--gap) - var(--spread)), -50%); }
         }
         @keyframes spread-right {
           0%, 100% { transform: translate(var(--gap), -50%); }
