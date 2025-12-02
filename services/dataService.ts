@@ -175,10 +175,7 @@ export const getTournaments = async (): Promise<Tournament[]> => {
   if (!supabase) return MOCK_TOURNAMENTS;
 
   try {
-    const { data, error } = await supabase
-      .from("tournaments")
-      .select("*")
-      .order("date", { ascending: false });
+    const { data, error } = await supabase.from("Tournament").select("*");
 
     if (error || !data) throw error;
 
