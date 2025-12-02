@@ -23,7 +23,7 @@ export const TournamentsList: React.FC = () => {
     <div className="w-full max-w-7xl mx-auto">
       {/* Filter Tabs */}
       <div className="flex justify-center gap-1 mb-12">
-        {["all", "upcoming", "past"].map((f) => (
+        {["all", "ongoing", "past"].map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f as any)}
