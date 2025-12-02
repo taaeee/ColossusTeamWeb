@@ -63,7 +63,7 @@ const MOCK_TOURNAMENTS: Tournament[] = [
     date: "May 23 – June 9, 2025",
     prize: "$1,000,000",
     image: "https://picsum.photos/800/450?random=10",
-    status: "upcoming",
+    status: "ongoing",
   },
   {
     id: 2,
@@ -90,7 +90,7 @@ const MOCK_TOURNAMENTS: Tournament[] = [
     date: "May 31 - June 2, 2025",
     prize: "$300,000",
     image: "https://picsum.photos/800/450?random=13",
-    status: "upcoming",
+    status: "ongoing",
   },
 ];
 

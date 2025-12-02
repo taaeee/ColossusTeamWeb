@@ -89,5 +89,5 @@ export interface Tournament {
   prize?: string;
   result?: string;
   image: string;
-  status: "upcoming" | "past";
+  status: "ongoing" | "past";
 }
