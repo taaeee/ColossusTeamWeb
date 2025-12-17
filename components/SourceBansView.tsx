@@ -17,11 +17,11 @@ export const SourceBansView: React.FC = () => {
   useEffect(() => {
     fetch("/api/server-status")
       .then((r) => r.json())
-      .then(setServers)
+      .then((data) => setServers([data]))
       .catch(() => setServers(null));
     const firstOnline = servers.find((s) => s.status === "online");
     if (firstOnline) setSelectedServer(firstOnline.id);
-  }, [servers]);
+  }, []);
 
   return (
     <div className="pt-32 pb-20 px-6 max-w-7xl mx-auto min-h-screen animate-in fade-in duration-500">
@@ -46,7 +46,7 @@ export const SourceBansView: React.FC = () => {
 
         {/* List */}
         <div>
-          {servers.map((server) => {
+          {servers?.map((server) => {
             const isSelected = selectedServer === server.id;
             const isOnline = server.status === "online";
 
