@@ -92,6 +92,12 @@ export interface Tournament {
   status: "ongoing" | "past";
 }
 
+export interface Player {
+  name: string;
+  score?: number;
+  time?: number;
+}
+
 export interface SourceServer {
   id: string;
   status: "online" | "offline";
@@ -102,4 +108,5 @@ export interface SourceServer {
   map: string;
   players: number;
   maxPlayers: number;
+  playerList: Player[];
 }

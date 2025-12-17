@@ -18,8 +18,11 @@ export default async function handler(req: any, res: any) {
       map: state.map,
       players: state.players.length,
       maxPlayers: state.maxplayers,
+      playerList: state.players,
     });
   } catch {
-    res.status(200).json({ status: "offline", mode: "unknown" });
+    res
+      .status(200)
+      .json({ status: "offline", mode: "unknown", playerList: [] });
   }
 }

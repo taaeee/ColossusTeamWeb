@@ -8,6 +8,7 @@ import {
   Gamepad2,
   Globe,
   ExternalLink,
+  Clock,
 } from "lucide-react";
 
 export const SourceBansView: React.FC = () => {
@@ -31,7 +32,7 @@ export const SourceBansView: React.FC = () => {
         </h1>
         <div className="flex items-center gap-2 text-zinc-500 text-xs tracking-widest uppercase">
           <Server size={12} />
-          <span>SourceBans++ Connection</span>
+          <span>Available Servers</span>
         </div>
       </div>
 
@@ -180,15 +181,40 @@ export const SourceBansView: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="mt-6 pt-4 border-t border-white/5">
-                      <div className="text-zinc-500 text-[10px] uppercase tracking-widest mb-2">
+                    {/* Current Players - Styled matching screenshot */}
+                    <div className="mt-12 pt-8 border-t border-white/5">
+                      <div className="text-zinc-500 text-[10px] uppercase tracking-[0.3em] mb-6 font-bold">
                         Current Players
                       </div>
-                      <div className="text-sm text-zinc-400 italic">
-                        {server.players === 0
-                          ? "No players currently in the server"
-                          : "Player list hidden via SourceBans config"}
-                      </div>
+
+                      {isOnline &&
+                      server.playerList &&
+                      server.playerList.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-4">
+                          {server.playerList.map((player, id) => (
+                            <div
+                              key={id}
+                              className="flex items-center justify-between group/player py-1"
+                            >
+                              <span className="text-sm font-bold text-white tracking-tight group-hover/player:text-blue-200 transition-colors">
+                                {player.name}
+                              </span>
+                              <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded border border-white/5 group-hover/player:border-white/10 transition-colors">
+                                <Clock size={12} className="text-zinc-600" />
+                                <span className="text-xs text-zinc-400 font-medium">
+                                  {player.time}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-zinc-600 italic font-light">
+                          {server.players === 0
+                            ? "The server is currently empty."
+                            : "Encryption active. Player list hidden."}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
