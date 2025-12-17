@@ -5,10 +5,11 @@ import { AiAnalyst } from "./components/AiAnalyst";
 import { ContactForm } from "./components/ContactForm";
 import { TournamentsList } from "./components/TournamentsList";
 import { TeamMember } from "./types";
-import { Menu, X, ChevronDown, ArrowRight } from "lucide-react";
+import { Menu, X, ChevronDown, ArrowRight, Server } from "lucide-react";
 import { VideoText } from "@/components/ui/video-text";
 import { ConfigView } from "./components/ConfigView";
 import { ToolsView } from "./components/ToolsView";
+import { SourceBansView } from "./components/SourceBansView";
 import Steam from "./logos/steam.svg?react";
 import { getTeamMembers } from "./services/dataService";
 
@@ -16,9 +17,9 @@ export default function App() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState<"home" | "config" | "tools">(
-    "home"
-  );
+  const [currentPage, setCurrentPage] = useState<
+    "home" | "config" | "tools" | "sourcebans"
+  >("home");
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export default function App() {
   }, []);
 
   const navigateTo = (
-    page: "home" | "config" | "tools",
+    page: "home" | "config" | "tools" | "sourcebans",
     sectionId?: string
   ) => {
     setCurrentPage(page);
@@ -121,10 +122,15 @@ export default function App() {
 
           <div className="hidden md:flex items-center gap-6">
             <button
-              onClick={() => window.open("https://colossus.games", "_blank")}
-              className="border border-white/20 px-6 py-2 text-xs tracking-widest hover:bg-white hover:text-black transition-all duration-300"
+              onClick={() => navigateTo("sourcebans")}
+              className={`border px-6 py-2 text-xs tracking-widest transition-all duration-300 flex items-center gap-2 ${
+                currentPage === "sourcebans"
+                  ? "bg-white text-black border-white"
+                  : "border-white/20 hover:bg-white hover:text-black"
+              }`}
             >
-              OUR SERVERS
+              <Server size={12} />
+              SOURCEBANS
             </button>
           </div>
 
@@ -137,25 +143,6 @@ export default function App() {
           </button>
         </div>
       </nav>
-
-      {/* Mobile Menu Overlay */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-black flex items-center justify-center">
-          <div className="flex flex-col gap-8 text-center text-2xl font-light tracking-widest text-zinc-400">
-            <button onClick={() => navigateTo("home", "roster")}>ROSTER</button>
-            <button onClick={() => navigateTo("home", "matches")}>
-              MATCHES
-            </button>
-            <button onClick={() => navigateTo("home", "tournaments")}>
-              TOURNAMENTS
-            </button>
-            <button onClick={() => navigateTo("tools")}>TOOLS</button>
-            <button onClick={() => navigateTo("home", "contact")}>
-              CONTACT
-            </button>
-          </div>
-        </div>
-      )}
       {/* Main Content */}
       <main className="grow">
         {currentPage === "home" ? (
@@ -284,6 +271,8 @@ export default function App() {
           </>
         ) : currentPage === "tools" ? (
           <ToolsView />
+        ) : currentPage === "sourcebans" ? (
+          <SourceBansView />
         ) : (
           <ConfigView
             member={selectedMember}

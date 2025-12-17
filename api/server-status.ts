@@ -9,13 +9,17 @@ export default async function handler(req: any, res: any) {
     });
 
     res.status(200).json({
-      online: true,
+      id: "1",
+      address: "54.209.216.171",
+      port: 27015,
+      status: "online",
+      mode: "versus",
       name: state.name,
       map: state.map,
       players: state.players.length,
       maxPlayers: state.maxplayers,
     });
   } catch {
-    res.status(200).json({ online: false });
+    res.status(200).json({ status: "offline", mode: "unknown" });
   }
 }

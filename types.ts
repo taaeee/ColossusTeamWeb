@@ -91,3 +91,15 @@ export interface Tournament {
   image: string;
   status: "ongoing" | "past";
 }
+
+export interface SourceServer {
+  id: string;
+  status: "online" | "offline";
+  address: string;
+  port: number;
+  mode: string;
+  name: string;
+  map: string;
+  players: number;
+  maxPlayers: number;
+}
