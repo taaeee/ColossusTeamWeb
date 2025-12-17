@@ -11,6 +11,15 @@ import {
   Clock,
 } from "lucide-react";
 
+export function formatTime(seconds: number): string {
+  if (seconds < 60) {
+    return `${Math.floor(seconds)}s`;
+  }
+
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}m`;
+}
+
 export const SourceBansView: React.FC = () => {
   const [servers, setServers] = useState<SourceServer[]>([]);
   const [selectedServer, setSelectedServer] = useState<string | null>(null);
@@ -202,7 +211,7 @@ export const SourceBansView: React.FC = () => {
                               <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded border border-white/5 group-hover/player:border-white/10 transition-colors">
                                 <Clock size={12} className="text-zinc-600" />
                                 <span className="text-xs text-zinc-400 font-medium">
-                                  {player.raw.time}
+                                  {formatTime(player.raw.time)}
                                 </span>
                               </div>
                             </div>
