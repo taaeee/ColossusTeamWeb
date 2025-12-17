@@ -202,7 +202,7 @@ export const SourceBansView: React.FC = () => {
                               <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded border border-white/5 group-hover/player:border-white/10 transition-colors">
                                 <Clock size={12} className="text-zinc-600" />
                                 <span className="text-xs text-zinc-400 font-medium">
-                                  {player.time}
+                                  {player.raw.time}
                                 </span>
                               </div>
                             </div>
