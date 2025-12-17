@@ -19,7 +19,9 @@ export const SourceBansView: React.FC = () => {
       .then((r) => r.json())
       .then(setServers)
       .catch(() => setServers(null));
-  }, []);
+    const firstOnline = servers.find((s) => s.status === "online");
+    if (firstOnline) setSelectedServer(firstOnline.id);
+  }, [servers]);
 
   return (
     <div className="pt-32 pb-20 px-6 max-w-7xl mx-auto min-h-screen animate-in fade-in duration-500">
