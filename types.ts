@@ -95,7 +95,7 @@ export interface Tournament {
 export interface Player {
   name: string;
   score?: number;
-  time?: number;
+  time: number;
 }
 
 export interface SourceServer {
