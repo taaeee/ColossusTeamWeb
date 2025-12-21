@@ -113,7 +113,10 @@ export const TournamentsList: React.FC = () => {
                   )}
                 </div>
 
-                <button className="px-6 py-3 bg-transparent border border-white/20 text-white text-[10px] tracking-[0.2em] font-bold uppercase hover:bg-white hover:text-black hover:border-white transition-all duration-300 flex items-center gap-2 group/btn">
+                <button
+                  onClick={() => window.open(t.details, "_blank")}
+                  className="px-6 py-3 bg-transparent border border-white/20 text-white text-[10px] tracking-[0.2em] font-bold uppercase hover:bg-white hover:text-black hover:border-white transition-all duration-300 flex items-center gap-2 group/btn"
+                >
                   Details
                   <ArrowUpRight
                     size={12}

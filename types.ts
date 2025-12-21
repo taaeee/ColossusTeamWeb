@@ -90,6 +90,7 @@ export interface Tournament {
   result?: string;
   image: string;
   status: "ongoing" | "past";
+  details?: string;
 }
 
 export interface Player {

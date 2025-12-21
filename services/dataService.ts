@@ -188,6 +188,7 @@ export const getTournaments = async (): Promise<Tournament[]> => {
       result: t.result,
       image: t.image,
       status: t.status,
+      details: t.details,
     }));
   } catch (error) {
     console.warn("Using mock data for Tournaments due to fetch error:", error);

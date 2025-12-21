@@ -91,10 +91,10 @@ export const SourceBansView: React.FC = () => {
                       {server.name}
                     </span>
                   </div>
-                  <div className="col-span-3 md:col-span-3 hidden md:block text-xs text-zinc-400 flex items-center gap-2">
+                  <div className="col-span-3 md:col-span-3 hidden md:block text-xs text-zinc-400 items-center gap-2">
                     <Map size={12} /> {server.map}
                   </div>
-                  <div className="col-span-3 md:col-span-2 hidden md:block text-xs text-zinc-400 flex items-center gap-2">
+                  <div className="col-span-3 md:col-span-2 hidden md:block text-xs text-zinc-400 items-center gap-2">
                     <Gamepad2 size={12} /> {server.mode}
                   </div>
                   <div className="col-span-6 md:col-span-2 text-right">
