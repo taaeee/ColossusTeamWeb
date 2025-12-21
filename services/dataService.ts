@@ -2,6 +2,14 @@ import { supabase } from "./supabaseClient";
 import { TeamMember, Match, MatchResult, Tournament } from "../types";
 import { url } from "inspector";
 
+// Helper to determine if a match is currently live (started in last 3 hours)
+const calculateIsLive = (matchDate: Date): boolean => {
+  const now = new Date().getTime();
+  const startTime = matchDate.getTime();
+  const durationMs = 3 * 60 * 60 * 1000; // 3 hours window for "Live" status
+  return now >= startTime && now <= startTime + durationMs;
+};
+
 // --- MOCK DATA FALLBACKS ---
 // These are used if the Supabase connection is missing or fails.
 
@@ -11,8 +19,8 @@ const MOCK_UPCOMING: Match[] = [
     opponent: "FAZE CLAN",
     game: "VALORANT",
     league: "Valorant Champions Tour",
-    date: "Today at 8:00 PM EST",
-    isLive: true,
+    date: new Date("2025-12-21T20:00:00Z"), // Example date
+    isLive: calculateIsLive(new Date("2025-12-21T20:00:00Z")),
     actionLabel: "WATCH LIVE",
     url: "https://www.youtube.com/@ColossusPOV",
   },
@@ -21,8 +29,8 @@ const MOCK_UPCOMING: Match[] = [
     opponent: "TEAM LIQUID",
     game: "LEAGUE OF LEGENDS",
     league: "LCS Championship",
-    date: "Tomorrow at 6:00 PM EST",
-    isLive: false,
+    date: new Date("2025-12-22T18:00:00Z"), // Example date
+    isLive: calculateIsLive(new Date("2025-12-22T18:00:00Z")),
     actionLabel: "DETAILS",
     url: "https://www.youtube.com/@ColossusPOV",
   },
@@ -128,16 +136,19 @@ export const getUpcomingMatches = async (): Promise<Match[]> => {
 
     if (error || !data) throw error;
 
-    return data.map((m: any) => ({
-      id: m.id,
-      opponent: m.opponent,
-      game: m.game,
-      league: m.league,
-      date: m.date,
-      isLive: m.isLive,
-      actionLabel: m.actionLabel,
-      url: m.url,
-    }));
+    return data.map((m: any) => {
+      const matchDate = new Date(m.date);
+      return {
+        id: m.id,
+        opponent: m.opponent,
+        game: m.game,
+        league: m.league,
+        date: matchDate,
+        isLive: calculateIsLive(matchDate),
+        actionLabel: m.action_label,
+        url: m.url,
+      };
+    });
   } catch (error) {
     console.warn("Using mock data for Matches due to fetch error:", error);
     return MOCK_UPCOMING;

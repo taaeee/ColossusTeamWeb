@@ -65,7 +65,7 @@ export interface Match {
   opponent: string;
   game: string;
   league: string;
-  date: string;
+  date: Date;
   isLive?: boolean;
   actionLabel: string;
   url?: string;
