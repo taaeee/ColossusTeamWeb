@@ -147,6 +147,9 @@ export const getUpcomingMatches = async (): Promise<Match[]> => {
         isLive: calculateIsLive(matchDate),
         actionLabel: m.action_label,
         url: m.url,
+        stage: m.stage,
+        maps: m.maps,
+        bestOf: m.bestOf,
       };
     });
   } catch (error) {

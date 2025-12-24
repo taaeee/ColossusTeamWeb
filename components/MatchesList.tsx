@@ -6,6 +6,10 @@ import {
   Calendar,
   Clock,
   ChevronRight,
+  X,
+  Layers,
+  Hash,
+  MapPin,
 } from "lucide-react";
 import { getUpcomingMatches, getMatchResults } from "../services/dataService";
 import { Match, MatchResult } from "../types";
@@ -14,6 +18,7 @@ import { useEffect, useState } from "react";
 export const MatchesList: React.FC = () => {
   const [upcomingMatches, setUpcomingMatches] = useState<Match[]>([]);
   const [recentResults, setRecentResults] = useState<MatchResult[]>([]);
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,6 +42,14 @@ export const MatchesList: React.FC = () => {
       minute: "2-digit",
       hour12: true,
     }).format(date);
+  };
+
+  const handleMatchAction = (match: Match) => {
+    if (match.isLive) {
+      window.open(match.url, "_blank");
+    } else {
+      setSelectedMatch(match);
+    }
   };
 
   return (
@@ -110,8 +123,8 @@ export const MatchesList: React.FC = () => {
                 </div>
 
                 <button
-                  onClick={() => window.open(match.url, "_blank")}
-                  className={`px-6 py-3 border text-[10px] tracking-[0.2em] font-bold transition-all duration-300 flex items-center gap-2 min-w-40 justify-center ${
+                  onClick={() => handleMatchAction(match)}
+                  className={`px-6 py-3 border text-[10px] tracking-[0.2em] font-bold transition-all duration-300 flex items-center gap-2 min-w-[160px] justify-center ${
                     match.isLive
                       ? "bg-red-600 border-red-600 text-white hover:bg-red-700 hover:border-red-700 shadow-[0_0_20px_rgba(220,38,38,0.3)]"
                       : "border-white/20 text-white hover:bg-white hover:text-black"
@@ -204,6 +217,119 @@ export const MatchesList: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Match Details Modal */}
+      {selectedMatch && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="relative w-full max-w-lg bg-obsidian border border-white/10 p-8 md:p-10 shadow-2xl animate-in zoom-in-95 duration-300">
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedMatch(null)}
+              className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors p-2"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Header */}
+            <div className="mb-10">
+              <div className="flex items-center gap-2 text-zinc-500 text-[10px] tracking-[0.3em] uppercase mb-2">
+                <Calendar size={12} />
+                <span>{formatDate(selectedMatch.date)}</span>
+              </div>
+              <h2 className="text-3xl font-bold tracking-tighter text-white uppercase mb-2">
+                MATCH DETAILS
+              </h2>
+              <div className="h-[2px] w-12 bg-white"></div>
+            </div>
+
+            {/* Content Grid */}
+            <div className="space-y-8">
+              {/* Teams Display */}
+              <div className="flex items-center justify-between bg-zinc-900/40 p-6 border border-white/5">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center font-bold text-sm">
+                    C
+                  </div>
+                  <span className="text-[10px] font-bold tracking-widest text-white">
+                    Colossus
+                  </span>
+                </div>
+                <div className="text-zinc-700 font-black italic text-xl">
+                  VS
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-12 h-12 bg-zinc-800 border border-white/10 text-white rounded-full flex items-center justify-center font-bold text-sm opacity-50">
+                    ?
+                  </div>
+                  <span className="text-[10px] font-bold tracking-widest text-zinc-400">
+                    {selectedMatch.opponent}
+                  </span>
+                </div>
+              </div>
+
+              {/* Technical Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex items-center gap-2 text-zinc-500 text-[10px] tracking-widest uppercase mb-1 font-bold">
+                      <Layers size={14} /> Stage
+                    </div>
+                    <div className="text-white text-lg font-light tracking-wide italic">
+                      {selectedMatch.stage || "Group Stage"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 text-zinc-500 text-[10px] tracking-widest uppercase mb-1 font-bold">
+                      <Hash size={14} /> Format
+                    </div>
+                    <div className="text-white text-lg font-light tracking-wide">
+                      Best of {selectedMatch.bestOf || 1}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-zinc-500 text-[10px] tracking-widest uppercase mb-2 font-bold">
+                    <MapPin size={14} /> Map Pool
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedMatch.maps ? (
+                      selectedMatch.maps.split(",").map((map, i) => (
+                        <span
+                          key={i}
+                          className="px-3 py-1 bg-white/5 border border-white/10 text-zinc-300 text-[10px] font-mono uppercase"
+                        >
+                          {map}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-zinc-600 text-[10px] italic">
+                        TBD after veto
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="pt-8 border-t border-white/5">
+                <button
+                  onClick={() => setSelectedMatch(null)}
+                  className="w-full py-4 bg-white text-black text-xs tracking-[0.3em] font-black uppercase hover:bg-zinc-200 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            {/* Tactical Decor */}
+            <div className="absolute bottom-0 left-0 w-16 h-16 pointer-events-none">
+              <div className="absolute bottom-4 left-4 w-4 h-[1px] bg-white/20"></div>
+              <div className="absolute bottom-4 left-4 h-4 w-[1px] bg-white/20"></div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

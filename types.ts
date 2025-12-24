@@ -69,6 +69,9 @@ export interface Match {
   isLive?: boolean;
   actionLabel: string;
   url?: string;
+  stage?: string;
+  maps?: string;
+  bestOf?: number;
 }
 
 export interface MatchResult {
