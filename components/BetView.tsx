@@ -497,8 +497,14 @@ export const BetView: React.FC<BetViewProps> = () => {
 
       if (Object.keys(voteCounts).length === 0) {
         // NO VOTES - Selección aleatoria
+        // Necesitamos obtener un user_id aleatorio de la cola
         const randomIndex = Math.floor(Math.random() * queue.length);
-        survivorCaptainId = queue[randomIndex].steamId;
+        const randomPlayer = queue[randomIndex];
+        // Buscar el user_id de este jugador en lobby_queue usando el mapeo inverso
+        const userId = Object.keys(userIdToSteamId).find(
+          (uid) => userIdToSteamId[uid] === randomPlayer.steamId
+        );
+        survivorCaptainId = userId || queue[randomIndex].steamId; // Fallback si falla
         selectionMethod = "random";
         console.log("No votes cast for Survivor captain, randomly selected");
       } else {
@@ -568,8 +574,14 @@ export const BetView: React.FC<BetViewProps> = () => {
 
       if (Object.keys(voteCounts).length === 0) {
         // NO VOTES - Selección aleatoria
+        // Necesitamos obtener un user_id aleatorio de la cola
         const randomIndex = Math.floor(Math.random() * queue.length);
-        infectedCaptainId = queue[randomIndex].steamId;
+        const randomPlayer = queue[randomIndex];
+        // Buscar el user_id de este jugador en lobby_queue usando el mapeo inverso
+        const userId = Object.keys(userIdToSteamId).find(
+          (uid) => userIdToSteamId[uid] === randomPlayer.steamId
+        );
+        infectedCaptainId = userId || queue[randomIndex].steamId; // Fallback si falla
         selectionMethod = "random";
         console.log("No votes cast for Infected captain, randomly selected");
       } else {
@@ -733,8 +745,20 @@ export const BetView: React.FC<BetViewProps> = () => {
       const player = queue.find((p) => p.steamId === playerId);
       if (!player) return;
 
+      // Buscar el user_id del jugador en lobby_queue
+      const { data: playerData, error: lookupError } = await supabase
+        .from("lobby_queue")
+        .select("user_id")
+        .eq("steam_id", playerId)
+        .single();
+
+      if (lookupError || !playerData) {
+        console.error("Error finding player for picking:", lookupError);
+        return;
+      }
+
       await supabase.from("match_rosters").insert({
-        user_id: playerId,
+        user_id: playerData.user_id,
         steam_id: player.steamId,
         nickname: player.personaname,
         avatar_url: player.avatarfull,
