@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { MatchesList } from "./components/MatchesList";
 import { MemberCard } from "./components/MemberCard";
 import { AiAnalyst } from "./components/AiAnalyst";
-import { Login } from "./components/ContactForm";
+
 import { TournamentsList } from "./components/TournamentsList";
 import { TeamMember } from "./types";
 import { Menu, X, ChevronDown, ArrowRight, Server } from "lucide-react";
@@ -257,16 +257,6 @@ export default function App() {
                   <div className="w-12 h-px bg-white/20 mt-4"></div>
                 </div>
                 <TournamentsList />
-              </div>
-            </section>
-
-            {/* Contact Section */}
-            <section
-              id="bet"
-              className="py-32 relative border-t border-white/5"
-            >
-              <div className="max-w-7xl mx-auto px-6">
-                <Login />
               </div>
             </section>
           </>
