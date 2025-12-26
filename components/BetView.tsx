@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { SteamUser } from "../types";
+// Asegúrate de que este import apunte a tu configuración real de Supabase
 import { supabase } from "@/services/supabaseClient";
 import { Session } from "@supabase/supabase-js";
 import {
@@ -12,89 +12,151 @@ import {
   Terminal,
 } from "lucide-react";
 
-interface BetViewProps {}
+// Tipos adaptados para mantener compatibilidad con tu UI
+export interface SteamUser {
+  steamId: string;
+  personaname: string;
+  avatarfull: string;
+  profileurl: string;
+}
 
-// Mock players to populate the queue initially
-const MOCK_GHOST_PLAYERS: Partial<SteamUser>[] = [
-  {
-    steamId: "ghost-1",
-    personaname: "VOID_PROTOCOL",
-    avatarfull: "https://picsum.photos/100/100?random=10",
-  },
-  {
-    steamId: "ghost-2",
-    personaname: "ECHO_SYSTEM",
-    avatarfull: "https://picsum.photos/100/100?random=11",
-  },
-  {
-    steamId: "ghost-3",
-    personaname: "FLUX_NODE",
-    avatarfull: "https://picsum.photos/100/100?random=12",
-  },
-];
+interface BetViewProps {}
 
 export const BetView: React.FC<BetViewProps> = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<SteamUser | null>(null);
-  const [queue, setQueue] = useState<Partial<SteamUser>[]>(MOCK_GHOST_PLAYERS);
+
+  // El estado queue ahora empieza vacío, esperando datos reales
+  const [queue, setQueue] = useState<SteamUser[]>([]);
   const [isJoining, setIsJoining] = useState(false);
 
-  // Manage Supabase session and convert to SteamUser
+  // 1. Manejo de Sesión (Login/Logout/Usuario actual)
   useEffect(() => {
-    // 1. Check for existing session
+    // Verificar sesión al cargar
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user?.user_metadata) {
-        const steamUser: SteamUser = {
-          steamId: session.user.user_metadata.steam_id,
-          personaname: session.user.user_metadata.full_name,
-          avatarfull: session.user.user_metadata.avatar_url,
-          profileurl: session.user.user_metadata.profile_url || "",
-        };
-        setUser(steamUser);
-      }
+      handleSessionUpdate(session);
     });
 
-    // 2. Listen to auth state changes
+    // Escuchar cambios de auth
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user?.user_metadata) {
-        const steamUser: SteamUser = {
-          steamId: session.user.user_metadata.steam_id,
-          personaname: session.user.user_metadata.full_name,
-          avatarfull: session.user.user_metadata.avatar_url,
-          profileurl: session.user.user_metadata.profile_url || "",
-        };
-        setUser(steamUser);
-      } else {
-        setUser(null);
-      }
+      handleSessionUpdate(session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  // Función auxiliar para procesar la sesión
+  const handleSessionUpdate = (session: Session | null) => {
+    setSession(session);
+    if (session?.user?.user_metadata) {
+      setUser({
+        steamId: session.user.user_metadata.steam_id,
+        personaname: session.user.user_metadata.full_name,
+        avatarfull: session.user.user_metadata.avatar_url,
+        profileurl: session.user.user_metadata.profile_url || "",
+      });
+    } else {
+      setUser(null);
+    }
+  };
+
+  // 2. Lógica de la Cola (Realtime + Fetch Inicial)
+  useEffect(() => {
+    // Cargar estado inicial
+    fetchQueue();
+
+    // Suscribirse a cambios en tiempo real en la tabla 'lobby_queue'
+    const channel = supabase
+      .channel("lobby-updates")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "lobby_queue" },
+        (payload) => {
+          console.log("Cambio en el lobby detectado:", payload);
+          // Refrescamos la lista completa para asegurar sincronización
+          fetchQueue();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Función para obtener la lista de jugadores y adaptarla a tu interfaz
+  const fetchQueue = async () => {
+    const { data, error } = await supabase
+      .from("lobby_queue")
+      .select("*")
+      .order("joined_at", { ascending: true }); // Orden de llegada
+
+    if (error) {
+      console.error("Error fetching queue:", error);
+      return;
+    }
+
+    if (data) {
+      // MAPEO CRÍTICO: De columnas DB -> A tu tipo SteamUser
+      const formattedQueue: SteamUser[] = data.map((row: any) => ({
+        steamId: row.steam_id,
+        personaname: row.nickname,
+        avatarfull: row.avatar_url,
+        profileurl: "", // La DB no guarda esto por ahora, pero no afecta visualmente
+      }));
+      setQueue(formattedQueue);
+    }
+  };
+
+  // Verificamos si el usuario actual está en la lista (comparando SteamIDs)
   const isInQueue = user && queue.some((p) => p.steamId === user.steamId);
   const isFull = queue.length >= 8;
 
-  const handleJoinQueue = () => {
-    if (!user || isInQueue || isFull) return;
+  // 3. Acciones del Usuario
+  const handleJoinQueue = async () => {
+    if (!user || isInQueue || isFull || !session) return;
     setIsJoining(true);
-    // Simulate tactical delay
-    setTimeout(() => {
-      setQueue((prev) => [...prev, user]);
+
+    try {
+      const { error } = await supabase.from("lobby_queue").insert({
+        user_id: session.user.id, // ID interno de Supabase para RLS
+        steam_id: user.steamId,
+        nickname: user.personaname,
+        avatar_url: user.avatarfull,
+      });
+
+      if (error) throw error;
+      // No necesitamos actualizar 'queue' manualmente aquí,
+      // el evento Realtime disparará fetchQueue() automáticamente.
+    } catch (error: any) {
+      console.error("Error uniéndose:", error.message);
+      alert("Error al unirse: " + error.message);
+    } finally {
       setIsJoining(false);
-    }, 800);
+    }
   };
 
-  const handleLeaveQueue = () => {
-    if (!user || !isInQueue) return;
-    setQueue((prev) => prev.filter((p) => p.steamId !== user.steamId));
+  const handleLeaveQueue = async () => {
+    if (!user || !isInQueue || !session) return;
+
+    try {
+      // Borramos basándonos en el user_id de supabase (seguro gracias a RLS)
+      const { error } = await supabase
+        .from("lobby_queue")
+        .delete()
+        .eq("user_id", session.user.id);
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error("Error saliendo:", error.message);
+    }
   };
 
   const handleLogin = () => {
+    // IMPORTANTE: Asegúrate de que esta URL sea la correcta de tu Edge Function pública
+    // y que tengas configurada la redirect URL a localhost o tu dominio en Supabase
     const authUrl =
       "https://obfrxccyavwhfwdpvlkm.supabase.co/functions/v1/steam-auth?action=login";
     window.location.href = authUrl;
@@ -164,7 +226,11 @@ export const BetView: React.FC<BetViewProps> = () => {
                 Deployment Status
               </span>
               <div className="text-white font-mono text-lg uppercase">
-                {isInQueue ? "Deployed" : "Standby"}
+                {isInQueue ? (
+                  <span className="text-green-400">Deployed</span>
+                ) : (
+                  <span className="text-yellow-500">Standby</span>
+                )}
               </div>
             </div>
 
@@ -173,7 +239,7 @@ export const BetView: React.FC<BetViewProps> = () => {
             {isInQueue ? (
               <button
                 onClick={handleLeaveQueue}
-                className="flex items-center gap-2 px-6 py-2 border border-red-500/50 text-red-500 text-[10px] font-black tracking-widest uppercase hover:bg-red-500 hover:text-white transition-all"
+                className="flex items-center gap-2 px-6 py-2 border border-red-500/50 text-red-500 text-[10px] font-black tracking-widest uppercase hover:bg-red-500 hover:text-white transition-all cursor-pointer"
               >
                 <UserMinus size={14} />
                 Leave Queue
@@ -182,7 +248,7 @@ export const BetView: React.FC<BetViewProps> = () => {
               <button
                 onClick={handleJoinQueue}
                 disabled={isFull || isJoining}
-                className="flex items-center gap-2 px-6 py-2 bg-white text-black text-[10px] font-black tracking-widest uppercase hover:bg-zinc-200 transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-2 bg-white text-black text-[10px] font-black tracking-widest uppercase hover:bg-zinc-200 transition-all disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isJoining ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -195,7 +261,7 @@ export const BetView: React.FC<BetViewProps> = () => {
 
             <button
               onClick={handleLogout}
-              className="p-2 border border-white/5 text-zinc-600 hover:text-white transition-all"
+              className="p-2 border border-white/5 text-zinc-600 hover:text-white transition-all cursor-pointer"
               title="Logout"
             >
               <LogOut size={16} />
@@ -216,7 +282,7 @@ export const BetView: React.FC<BetViewProps> = () => {
           </p>
           <button
             onClick={handleLogin}
-            className="flex items-center gap-4 bg-[#1b2838] hover:bg-[#2a3f5a] text-white px-8 py-3 transition-all duration-300 border border-white/5 group shadow-[0_0_40px_rgba(0,0,0,0.5)]"
+            className="flex items-center gap-4 bg-[#1b2838] hover:bg-[#2a3f5a] text-white px-8 py-3 transition-all duration-300 border border-white/5 group shadow-[0_0_40px_rgba(0,0,0,0.5)] cursor-pointer"
           >
             <img
               src="https://upload.wikimedia.org/wikipedia/commons/8/83/Steam_icon_logo.svg"
