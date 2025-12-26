@@ -31,6 +31,7 @@ export function Login() {
     <div>
       <h1>¡Logueado!</h1>
       <p>Steam ID: {session.user.user_metadata.steam_id}</p>
+      <p>NickName: {session.user.user_metadata.full_name}</p>
       <img src={session.user.user_metadata.avatar_url} alt="Avatar" />
       <button onClick={() => supabase.auth.signOut()}>Cerrar Sesión</button>
     </div>
