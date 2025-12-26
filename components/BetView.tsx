@@ -191,7 +191,7 @@ export const BetView: React.FC<BetViewProps> = () => {
                 {queue.length}
               </span>
               <span className="text-zinc-700">/</span>
-              <span className="text-zinc-700">08</span>
+              <span className="text-zinc-700">8</span>
             </div>
           </div>
         </div>
@@ -215,7 +215,7 @@ export const BetView: React.FC<BetViewProps> = () => {
               </h2>
               <div className="flex items-center gap-2 text-zinc-500 text-[9px] tracking-widest uppercase mt-0.5">
                 <ShieldCheck size={10} className="text-blue-400" />
-                <span>Verified Combatant</span>
+                <span>{user.steamId}</span>
               </div>
             </div>
           </div>
@@ -223,11 +223,11 @@ export const BetView: React.FC<BetViewProps> = () => {
           <div className="flex items-center gap-6 mt-4 md:mt-0">
             <div className="flex flex-col items-end mr-4">
               <span className="text-[8px] text-zinc-600 uppercase tracking-widest mb-0.5">
-                Deployment Status
+                Status
               </span>
               <div className="text-white font-mono text-lg uppercase">
                 {isInQueue ? (
-                  <span className="text-green-400">Deployed</span>
+                  <span className="text-green-400">In Queue</span>
                 ) : (
                   <span className="text-yellow-500">Standby</span>
                 )}
@@ -301,7 +301,7 @@ export const BetView: React.FC<BetViewProps> = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-zinc-600 text-[10px] tracking-widest font-bold uppercase">
             <Users size={14} />
-            <span>Tactical Enrollment Grid</span>
+            <span>Players in queue</span>
           </div>
           {isFull && (
             <div className="text-[10px] text-green-500 font-bold tracking-[0.2em] animate-pulse">
@@ -328,7 +328,7 @@ export const BetView: React.FC<BetViewProps> = () => {
                   <>
                     <img
                       src={player.avatarfull}
-                      className="w-20 h-20 mb-4 border border-white/10 grayscale group-hover:grayscale-0 transition-all"
+                      className="w-20 h-20 mb-4 border border-white/10"
                       alt="Player"
                     />
                     <div className="text-[10px] font-black tracking-widest text-white uppercase text-center truncate w-full">
