@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { MatchesList } from "./components/MatchesList";
 import { MemberCard } from "./components/MemberCard";
 import { AiAnalyst } from "./components/AiAnalyst";
-import { ContactForm } from "./components/ContactForm";
+import { Login } from "./components/ContactForm";
 import { TournamentsList } from "./components/TournamentsList";
 import { TeamMember } from "./types";
 import { Menu, X, ChevronDown, ArrowRight, Server } from "lucide-react";
@@ -265,7 +265,7 @@ export default function App() {
               className="py-32 relative border-t border-white/5"
             >
               <div className="max-w-7xl mx-auto px-6">
-                <ContactForm />
+                <Login />
               </div>
             </section>
           </>
