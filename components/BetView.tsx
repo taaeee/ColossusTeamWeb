@@ -691,13 +691,23 @@ export const BetView: React.FC<BetViewProps> = () => {
           .delete()
           .neq("id", "00000000-0000-0000-0000-000000000000");
 
-        // Buscar datos de los capitanes en la cola
+        console.log("Inserting captains into rosters...");
+        console.log("Survivor captain ID:", stateData.captain_survivor_id);
+        console.log("Infected captain ID:", infectedCaptainId);
+
+        // Buscar datos de los capitanes en la cola usando el mapeo
+        const survivorSteamId = userIdToSteamId[stateData.captain_survivor_id];
+        const infectedSteamId = userIdToSteamId[infectedCaptainId];
+
         const survivorCaptain = queue.find(
-          (p) => session?.user?.id === stateData.captain_survivor_id
+          (p) => p.steamId === survivorSteamId
         );
         const infectedCaptain = queue.find(
-          (p) => session?.user?.id === infectedCaptainId
+          (p) => p.steamId === infectedSteamId
         );
+
+        console.log("Survivor captain found:", survivorCaptain?.personaname);
+        console.log("Infected captain found:", infectedCaptain?.personaname);
 
         if (survivorCaptain) {
           await supabase.from("match_rosters").insert({
@@ -707,6 +717,9 @@ export const BetView: React.FC<BetViewProps> = () => {
             avatar_url: survivorCaptain.avatarfull,
             team: "SURVIVORS",
           });
+          console.log("✅ Survivor captain inserted into roster");
+        } else {
+          console.error("❌ Survivor captain not found in queue");
         }
 
         if (infectedCaptain) {
@@ -717,6 +730,9 @@ export const BetView: React.FC<BetViewProps> = () => {
             avatar_url: infectedCaptain.avatarfull,
             team: "INFECTED",
           });
+          console.log("✅ Infected captain inserted into roster");
+        } else {
+          console.error("❌ Infected captain not found in queue");
         }
       }
     } catch (error) {
