@@ -72,6 +72,11 @@ export const BetView: React.FC<BetViewProps> = () => {
     infected: "voted" | "random" | "tie";
   }>({ survivor: "voted", infected: "voted" });
 
+  // Mapeo de user_id a steam_id para poder contar votos correctamente
+  const [userIdToSteamId, setUserIdToSteamId] = useState<{
+    [key: string]: string;
+  }>({});
+
   // 1. Manejo de Sesión (Login/Logout/Usuario actual)
   useEffect(() => {
     // Verificar sesión al cargar
@@ -293,6 +298,13 @@ export const BetView: React.FC<BetViewProps> = () => {
         profileurl: "", // La DB no guarda esto por ahora, pero no afecta visualmente
       }));
       setQueue(formattedQueue);
+
+      // Crear mapeo de user_id a steam_id
+      const mapping: { [key: string]: string } = {};
+      data.forEach((row: any) => {
+        mapping[row.user_id] = row.steam_id;
+      });
+      setUserIdToSteamId(mapping);
     }
   };
 
@@ -669,20 +681,32 @@ export const BetView: React.FC<BetViewProps> = () => {
   };
 
   // Función para votar
-  const handleVote = async (votedForId: string) => {
+  const handleVote = async (playerSteamId: string) => {
     if (!session) return;
 
     try {
+      // Buscar el user_id del jugador votado en la tabla lobby_queue
+      const { data: playerData, error: lookupError } = await supabase
+        .from("lobby_queue")
+        .select("user_id")
+        .eq("steam_id", playerSteamId)
+        .single();
+
+      if (lookupError || !playerData) {
+        console.error("Error finding player:", lookupError);
+        return;
+      }
+
       // Eliminar voto anterior si existe
       await supabase
         .from("match_votes")
         .delete()
         .eq("voter_id", session.user.id);
 
-      // Insertar nuevo voto
+      // Insertar nuevo voto con el user_id correcto
       await supabase.from("match_votes").insert({
         voter_id: session.user.id,
-        voted_for_id: votedForId,
+        voted_for_id: playerData.user_id,
       });
     } catch (error) {
       console.error("Error voting:", error);
@@ -1006,34 +1030,30 @@ export const BetView: React.FC<BetViewProps> = () => {
                 <div className="flex items-center gap-2">
                   <img
                     src={
-                      queue.find(
-                        (p) =>
-                          session?.user?.id === matchState.captain_survivor_id
-                      )?.avatarfull || ""
+                      queue.find((p) => {
+                        // Find player by checking their user_id in lobby_queue
+                        const queuePlayer = queue.find(
+                          (q) => q.steamId === p.steamId
+                        );
+                        return matchState.captain_survivor_id && queuePlayer;
+                      })?.avatarfull || ""
                     }
                     alt="Captain"
                     className="w-10 h-10 border border-green-500/50"
                   />
-                  <span className="text-white font-bold">
-                    {queue.find(
-                      (p) =>
-                        session?.user?.id === matchState.captain_survivor_id
-                    )?.personaname || "Unknown"}
-                  </span>
+                  <span className="text-white font-bold">Survivor Captain</span>
                 </div>
               </div>
             )}
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {queue.map((player, index) => {
-              const hasVoted = votes.some(
-                (v) =>
-                  v.voter_id === session?.user?.id &&
-                  v.voted_for_id === session?.user?.id
-              );
-              const voteCount = votes.filter(
-                (v) => v.voted_for_id === session?.user?.id
-              ).length;
+              // Contar votos para ESTE jugador específico usando el mapeo
+              const voteCount = votes.filter((v) => {
+                // v.voted_for_id es un user_id, necesitamos convertirlo a steam_id
+                const votedForSteamId = userIdToSteamId[v.voted_for_id];
+                return votedForSteamId === player.steamId;
+              }).length;
 
               return (
                 <div
@@ -1054,7 +1074,7 @@ export const BetView: React.FC<BetViewProps> = () => {
                     </div>
                   )}
                   <button
-                    onClick={() => handleVote(session?.user?.id || "")}
+                    onClick={() => handleVote(player.steamId)}
                     disabled={!session}
                     className="w-full py-1 bg-yellow-500 text-black text-[8px] font-black tracking-widest uppercase hover:bg-yellow-400 transition-all disabled:opacity-50"
                   >
