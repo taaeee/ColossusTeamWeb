@@ -116,3 +116,10 @@ export interface SourceServer {
   maxPlayers: number;
   playerList: Player[];
 }
+
+export interface SteamUser {
+  steamId: string;
+  personaname: string;
+  avatarfull: string;
+  profileurl: string;
+}

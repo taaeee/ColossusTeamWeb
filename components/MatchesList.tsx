@@ -124,7 +124,7 @@ export const MatchesList: React.FC = () => {
 
                 <button
                   onClick={() => handleMatchAction(match)}
-                  className={`px-6 py-3 border text-[10px] tracking-[0.2em] font-bold transition-all duration-300 flex items-center gap-2 min-w-[160px] justify-center ${
+                  className={`px-6 py-3 border text-[10px] tracking-[0.2em] font-bold transition-all duration-300 flex items-center gap-2 min-w-40 justify-center ${
                     match.isLive
                       ? "bg-red-600 border-red-600 text-white hover:bg-red-700 hover:border-red-700 shadow-[0_0_20px_rgba(220,38,38,0.3)]"
                       : "border-white/20 text-white hover:bg-white hover:text-black"
@@ -220,7 +220,7 @@ export const MatchesList: React.FC = () => {
 
       {/* Match Details Modal */}
       {selectedMatch && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
           <div className="relative w-full max-w-lg bg-obsidian border border-white/10 p-8 md:p-10 shadow-2xl animate-in zoom-in-95 duration-300">
             {/* Close Button */}
             <button
@@ -239,7 +239,7 @@ export const MatchesList: React.FC = () => {
               <h2 className="text-3xl font-bold tracking-tighter text-white uppercase mb-2">
                 MATCH DETAILS
               </h2>
-              <div className="h-[2px] w-12 bg-white"></div>
+              <div className="h-0.5 w-12 bg-white"></div>
             </div>
 
             {/* Content Grid */}
@@ -324,8 +324,8 @@ export const MatchesList: React.FC = () => {
 
             {/* Tactical Decor */}
             <div className="absolute bottom-0 left-0 w-16 h-16 pointer-events-none">
-              <div className="absolute bottom-4 left-4 w-4 h-[1px] bg-white/20"></div>
-              <div className="absolute bottom-4 left-4 h-4 w-[1px] bg-white/20"></div>
+              <div className="absolute bottom-4 left-4 w-4 h-px bg-white/20"></div>
+              <div className="absolute bottom-4 left-4 h-4 w-px bg-white/20"></div>
             </div>
           </div>
         </div>

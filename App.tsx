@@ -10,6 +10,7 @@ import { VideoText } from "@/components/ui/video-text";
 import { ConfigView } from "./components/ConfigView";
 import { ToolsView } from "./components/ToolsView";
 import { SourceBansView } from "./components/SourceBansView";
+import { BetView } from "./components/BetView";
 import Steam from "./logos/steam.svg?react";
 import { getTeamMembers } from "./services/dataService";
 
@@ -18,7 +19,7 @@ export default function App() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<
-    "home" | "config" | "tools" | "sourcebans"
+    "home" | "config" | "tools" | "sourcebans" | "bet"
   >("home");
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
 
@@ -39,7 +40,7 @@ export default function App() {
   }, []);
 
   const navigateTo = (
-    page: "home" | "config" | "tools" | "sourcebans",
+    page: "home" | "config" | "tools" | "sourcebans" | "bet",
     sectionId?: string
   ) => {
     setCurrentPage(page);
@@ -113,10 +114,10 @@ export default function App() {
               TOOLS
             </button>
             <button
-              onClick={() => navigateTo("home", "contact")}
+              onClick={() => navigateTo("bet")}
               className="hover:text-white transition-colors"
             >
-              CONTACT
+              QUEUE
             </button>
           </div>
 
@@ -261,7 +262,7 @@ export default function App() {
 
             {/* Contact Section */}
             <section
-              id="contact"
+              id="bet"
               className="py-32 relative border-t border-white/5"
             >
               <div className="max-w-7xl mx-auto px-6">
@@ -273,6 +274,8 @@ export default function App() {
           <ToolsView />
         ) : currentPage === "sourcebans" ? (
           <SourceBansView />
+        ) : currentPage === "bet" ? (
+          <BetView />
         ) : (
           <ConfigView
             member={selectedMember}
