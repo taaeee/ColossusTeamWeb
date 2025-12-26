@@ -344,7 +344,7 @@ export const BetView: React.FC<BetViewProps> = () => {
 
   // Verificamos si el usuario actual está en la lista (comparando SteamIDs)
   const isInQueue = user && queue.some((p) => p.steamId === user.steamId);
-  const isFull = queue.length >= 8;
+  const isFull = queue.length >= maxPlayers;
 
   // 3. Acciones del Usuario
   const handleJoinQueue = async () => {
@@ -799,12 +799,14 @@ export const BetView: React.FC<BetViewProps> = () => {
             </div>
             <div className="text-2xl font-mono text-white flex items-center gap-3">
               <span
-                className={queue.length === 8 ? "text-green-500" : "text-white"}
+                className={
+                  queue.length === maxPlayers ? "text-green-500" : "text-white"
+                }
               >
                 {queue.length}
               </span>
               <span className="text-zinc-700">/</span>
-              <span className="text-zinc-700">8</span>
+              <span className="text-zinc-700">{maxPlayers}</span>
             </div>
           </div>
         </div>
@@ -929,7 +931,7 @@ export const BetView: React.FC<BetViewProps> = () => {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {Array.from({ length: 8 }).map((_, index) => {
+              {Array.from({ length: maxPlayers }).map((_, index) => {
                 const player = queue[index];
                 return (
                   <div
