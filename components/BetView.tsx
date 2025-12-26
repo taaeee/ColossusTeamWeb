@@ -50,7 +50,9 @@ interface Roster {
 interface BetViewProps {}
 
 export const BetView: React.FC<BetViewProps> = () => {
-  const maxPlayers = 2;
+  // Configuración de jugadores máximos
+  const MAX_PLAYERS = 2;
+
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<SteamUser | null>(null);
 
@@ -356,7 +358,7 @@ export const BetView: React.FC<BetViewProps> = () => {
 
   // Verificamos si el usuario actual está en la lista (comparando SteamIDs)
   const isInQueue = user && queue.some((p) => p.steamId === user.steamId);
-  const isFull = queue.length >= maxPlayers;
+  const isFull = queue.length >= MAX_PLAYERS;
 
   // 3. Acciones del Usuario
   const handleJoinQueue = async () => {
@@ -435,18 +437,18 @@ export const BetView: React.FC<BetViewProps> = () => {
   useEffect(() => {
     // FIX #2: Logging extensivo para debugging
     console.log("=== PHASE TRANSITION CHECK ===");
-    console.log("Queue length:", queue.length, "/ Max:", maxPlayers);
+    console.log("Queue length:", queue.length, "/ Max:", MAX_PLAYERS);
     console.log("Current phase:", matchState?.phase);
     console.log(
       "Should transition?",
-      queue.length === maxPlayers && matchState?.phase === "QUEUE"
+      queue.length === MAX_PLAYERS && matchState?.phase === "QUEUE"
     );
 
-    if (queue.length === maxPlayers && matchState?.phase === "QUEUE") {
+    if (queue.length === MAX_PLAYERS && matchState?.phase === "QUEUE") {
       console.log("🚀 TRIGGERING TRANSITION TO VOTING");
       transitionToVoting();
     }
-  }, [queue.length, matchState?.phase, maxPlayers]);
+  }, [queue.length, matchState?.phase, MAX_PLAYERS]);
 
   // Timer de votación
   useEffect(() => {
@@ -898,13 +900,13 @@ export const BetView: React.FC<BetViewProps> = () => {
 
       let updates: any = { phase: targetPhase };
 
-      // If skipping to PICKING or READY, assign random captains
-      if (targetPhase === "PICKING" || targetPhase === "READY") {
+      // Solo asignar capitanes aleatorios al saltar a PICKING
+      if (targetPhase === "PICKING") {
         if (queue.length >= 2) {
-          // Get 2 random players as captains
+          // Obtener 2 jugadores aleatorios diferentes como capitanes
           const shuffled = [...queue].sort(() => Math.random() - 0.5);
           const survivor = shuffled[0];
-          const infected = shuffled[1];
+          const infected = shuffled[1]; // Garantizado diferente porque shuffled tiene todos los jugadores
 
           // Find their user_ids
           const survivorUserId = Object.keys(userIdToSteamId).find(
@@ -916,6 +918,7 @@ export const BetView: React.FC<BetViewProps> = () => {
 
           updates.captain_survivor_id = survivorUserId;
           updates.captain_infected_id = infectedUserId;
+          updates.current_picker_id = survivorUserId; // Survivor picks first
 
           console.log("Assigned random captains:");
           console.log(
@@ -932,11 +935,7 @@ export const BetView: React.FC<BetViewProps> = () => {
             infected.personaname,
             ")"
           );
-
-          if (targetPhase === "PICKING") {
-            updates.current_picker_id = survivorUserId;
-            console.log("  Current picker:", survivorUserId);
-          }
+          console.log("  Current picker:", survivorUserId);
         } else {
           console.warn("Not enough players in queue for captains");
         }
@@ -1025,13 +1024,13 @@ export const BetView: React.FC<BetViewProps> = () => {
             <div className="text-2xl font-mono text-white flex items-center gap-3">
               <span
                 className={
-                  queue.length === maxPlayers ? "text-green-500" : "text-white"
+                  queue.length === MAX_PLAYERS ? "text-green-500" : "text-white"
                 }
               >
                 {queue.length}
               </span>
               <span className="text-zinc-700">/</span>
-              <span className="text-zinc-700">{maxPlayers}</span>
+              <span className="text-zinc-700">{MAX_PLAYERS}</span>
             </div>
           </div>
         </div>
@@ -1156,7 +1155,7 @@ export const BetView: React.FC<BetViewProps> = () => {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {Array.from({ length: maxPlayers }).map((_, index) => {
+              {Array.from({ length: MAX_PLAYERS }).map((_, index) => {
                 const player = queue[index];
                 return (
                   <div
