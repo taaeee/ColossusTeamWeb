@@ -676,6 +676,38 @@ export const BetView: React.FC<BetViewProps> = () => {
         .single();
 
       if (stateData) {
+        // IMPORTANTE: Verificar que el Infected captain sea diferente del Survivor captain
+        if (infectedCaptainId === stateData.captain_survivor_id) {
+          console.warn(
+            "⚠️ Same player selected for both captains! Selecting different player..."
+          );
+          // Buscar un jugador diferente
+          const availablePlayers = queue.filter((p) => {
+            const userId = Object.keys(userIdToSteamId).find(
+              (uid) => userIdToSteamId[uid] === p.steamId
+            );
+            return userId && userId !== stateData.captain_survivor_id;
+          });
+
+          if (availablePlayers.length > 0) {
+            const randomPlayer =
+              availablePlayers[
+                Math.floor(Math.random() * availablePlayers.length)
+              ];
+            const userId = Object.keys(userIdToSteamId).find(
+              (uid) => userIdToSteamId[uid] === randomPlayer.steamId
+            );
+            infectedCaptainId = userId || infectedCaptainId;
+            console.log(
+              "✅ Selected different Infected captain:",
+              infectedCaptainId,
+              "(",
+              randomPlayer.personaname,
+              ")"
+            );
+          }
+        }
+
         await supabase
           .from("match_state")
           .update({
@@ -959,6 +991,57 @@ export const BetView: React.FC<BetViewProps> = () => {
 
       await supabase.from("match_state").update(updates).eq("id", data.id);
       console.log("✅ Phase transition complete");
+
+      // Si saltamos a PICKING, insertar capitanes en rosters (igual que el flujo secuencial)
+      if (
+        targetPhase === "PICKING" &&
+        updates.captain_survivor_id &&
+        updates.captain_infected_id
+      ) {
+        console.log("Inserting captains into rosters (admin skip)...");
+
+        // Limpiar rosters anteriores
+        await supabase
+          .from("match_rosters")
+          .delete()
+          .neq("id", "00000000-0000-0000-0000-000000000000");
+
+        // Buscar datos de los capitanes en la cola usando el mapeo
+        const survivorSteamId = userIdToSteamId[updates.captain_survivor_id];
+        const infectedSteamId = userIdToSteamId[updates.captain_infected_id];
+
+        const survivorCaptain = queue.find(
+          (p) => p.steamId === survivorSteamId
+        );
+        const infectedCaptain = queue.find(
+          (p) => p.steamId === infectedSteamId
+        );
+
+        console.log("Survivor captain found:", survivorCaptain?.personaname);
+        console.log("Infected captain found:", infectedCaptain?.personaname);
+
+        if (survivorCaptain) {
+          await supabase.from("match_rosters").insert({
+            user_id: updates.captain_survivor_id,
+            steam_id: survivorCaptain.steamId,
+            nickname: survivorCaptain.personaname,
+            avatar_url: survivorCaptain.avatarfull,
+            team: "SURVIVORS",
+          });
+          console.log("✅ Survivor captain inserted into roster");
+        }
+
+        if (infectedCaptain) {
+          await supabase.from("match_rosters").insert({
+            user_id: updates.captain_infected_id,
+            steam_id: infectedCaptain.steamId,
+            nickname: infectedCaptain.personaname,
+            avatar_url: infectedCaptain.avatarfull,
+            team: "INFECTED",
+          });
+          console.log("✅ Infected captain inserted into roster");
+        }
+      }
     } catch (error) {
       console.error("❌ Error forcing phase transition:", error);
     }
