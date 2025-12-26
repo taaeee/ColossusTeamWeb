@@ -163,6 +163,19 @@ export const BetView: React.FC<BetViewProps> = () => {
   };
 
   const handleLogout = async () => {
+    // First, remove user from queue if they're in it
+    if (isInQueue && session) {
+      try {
+        await supabase
+          .from("lobby_queue")
+          .delete()
+          .eq("user_id", session.user.id);
+      } catch (error: any) {
+        console.error("Error leaving queue on logout:", error.message);
+      }
+    }
+
+    // Then sign out
     await supabase.auth.signOut();
   };
 
@@ -261,7 +274,6 @@ export const BetView: React.FC<BetViewProps> = () => {
 
             <button
               onClick={() => {
-                handleLeaveQueue();
                 handleLogout();
               }}
               className="p-2 border border-white/5 text-zinc-600 hover:text-white transition-all cursor-pointer"
