@@ -260,7 +260,10 @@ export const BetView: React.FC<BetViewProps> = () => {
             )}
 
             <button
-              onClick={handleLogout}
+              onClick={() => {
+                handleLogout();
+                handleLeaveQueue();
+              }}
               className="p-2 border border-white/5 text-zinc-600 hover:text-white transition-all cursor-pointer"
               title="Logout"
             >
