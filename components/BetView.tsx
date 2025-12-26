@@ -50,6 +50,7 @@ interface Roster {
 interface BetViewProps {}
 
 export const BetView: React.FC<BetViewProps> = () => {
+  const maxPlayers = 2;
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<SteamUser | null>(null);
 
@@ -63,6 +64,13 @@ export const BetView: React.FC<BetViewProps> = () => {
   const [rosters, setRosters] = useState<Roster[]>([]);
   const [votingTimeLeft, setVotingTimeLeft] = useState<number>(20);
   const [serverIP, setServerIP] = useState<string>("");
+
+  // Estados para features avanzadas
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [captainSelectionMethod, setCaptainSelectionMethod] = useState<{
+    survivor: "voted" | "random" | "tie";
+    infected: "voted" | "random" | "tie";
+  }>({ survivor: "voted", infected: "voted" });
 
   // 1. Manejo de Sesión (Login/Logout/Usuario actual)
   useEffect(() => {
@@ -169,6 +177,100 @@ export const BetView: React.FC<BetViewProps> = () => {
       supabase.removeChannel(rostersChannel);
     };
   }, []);
+
+  // 4. Verificar si el usuario actual es admin
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("admins")
+        .select("steam_id")
+        .eq("steam_id", user.steamId)
+        .single();
+
+      if (error) {
+        setIsAdmin(false);
+        return;
+      }
+
+      setIsAdmin(!!data);
+    };
+
+    checkAdmin();
+  }, [user]);
+
+  // 5. Detectar cuando un jugador se desconecta
+  useEffect(() => {
+    if (!session && user) {
+      // Usuario se desconectó
+      handlePlayerLeave();
+    }
+  }, [session, user]);
+
+  const handlePlayerLeave = async () => {
+    if (!matchState) return;
+
+    try {
+      if (matchState.phase === "QUEUE") {
+        // Simplemente remover de la cola
+        // El useEffect de lobby_queue ya maneja esto
+        return;
+      }
+
+      if (matchState.phase === "VOTING") {
+        // Remover votos del jugador y continuar
+        if (session?.user?.id) {
+          await supabase
+            .from("match_votes")
+            .delete()
+            .eq("voter_id", session.user.id);
+        }
+        return;
+      }
+
+      if (matchState.phase === "PICKING" || matchState.phase === "READY") {
+        // Abortar partida si alguien sale durante picking o ready
+        await abortMatch(
+          "Un jugador se desconectó. La partida ha sido abortada."
+        );
+      }
+    } catch (error) {
+      console.error("Error handling player leave:", error);
+    }
+  };
+
+  const abortMatch = async (reason: string) => {
+    alert(reason);
+
+    // Limpiar todo y volver a QUEUE
+    await supabase
+      .from("match_rosters")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000");
+    await supabase
+      .from("match_votes")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000");
+
+    const { data } = await supabase.from("match_state").select("id").single();
+    if (data) {
+      await supabase
+        .from("match_state")
+        .update({
+          phase: "QUEUE",
+          voting_round: null,
+          captain_survivor_id: null,
+          captain_infected_id: null,
+          current_picker_id: null,
+          server_ip: null,
+        })
+        .eq("id", data.id);
+    }
+  };
 
   // Función para obtener la lista de jugadores y adaptarla a tu interfaz
   const fetchQueue = async () => {
@@ -312,7 +414,7 @@ export const BetView: React.FC<BetViewProps> = () => {
   // 4. Lógica de transición de fases
   // Detectar cuando la cola se llena y transicionar a VOTING
   useEffect(() => {
-    if (queue.length === 8 && matchState?.phase === "QUEUE") {
+    if (queue.length === maxPlayers && matchState?.phase === "QUEUE") {
       transitionToVoting();
     }
   }, [queue.length, matchState?.phase]);
@@ -371,16 +473,47 @@ export const BetView: React.FC<BetViewProps> = () => {
 
   const transitionToInfectedVoting = async () => {
     try {
-      // Contar votos y determinar capitán Survivor
+      // Contar votos y determinar capitán Survivor con fallback
       const voteCounts: { [key: string]: number } = {};
       votes.forEach((vote) => {
         voteCounts[vote.voted_for_id] =
           (voteCounts[vote.voted_for_id] || 0) + 1;
       });
 
-      const survivorCaptainId = Object.entries(voteCounts).sort(
-        (a, b) => b[1] - a[1]
-      )[0]?.[0];
+      let survivorCaptainId: string;
+      let selectionMethod: "voted" | "random" | "tie" = "voted";
+
+      if (Object.keys(voteCounts).length === 0) {
+        // NO VOTES - Selección aleatoria
+        const randomIndex = Math.floor(Math.random() * queue.length);
+        survivorCaptainId = queue[randomIndex].steamId;
+        selectionMethod = "random";
+        console.log("No votes cast for Survivor captain, randomly selected");
+      } else {
+        const sorted = Object.entries(voteCounts).sort((a, b) => b[1] - a[1]);
+        const topVoteCount = sorted[0][1];
+        const tiedCandidates = sorted.filter(
+          ([_, count]) => count === topVoteCount
+        );
+
+        if (tiedCandidates.length > 1) {
+          // TIE - Selección aleatoria de los empatados
+          const randomIndex = Math.floor(Math.random() * tiedCandidates.length);
+          survivorCaptainId = tiedCandidates[randomIndex][0];
+          selectionMethod = "tie";
+          console.log(
+            "Vote tie for Survivor captain, randomly selected from tied candidates"
+          );
+        } else {
+          survivorCaptainId = sorted[0][0];
+        }
+      }
+
+      // Actualizar método de selección
+      setCaptainSelectionMethod((prev) => ({
+        ...prev,
+        survivor: selectionMethod,
+      }));
 
       const { data: stateData } = await supabase
         .from("match_state")
@@ -411,16 +544,47 @@ export const BetView: React.FC<BetViewProps> = () => {
 
   const transitionToPicking = async () => {
     try {
-      // Contar votos y determinar capitán Infected
+      // Contar votos y determinar capitán Infected con fallback
       const voteCounts: { [key: string]: number } = {};
       votes.forEach((vote) => {
         voteCounts[vote.voted_for_id] =
           (voteCounts[vote.voted_for_id] || 0) + 1;
       });
 
-      const infectedCaptainId = Object.entries(voteCounts).sort(
-        (a, b) => b[1] - a[1]
-      )[0]?.[0];
+      let infectedCaptainId: string;
+      let selectionMethod: "voted" | "random" | "tie" = "voted";
+
+      if (Object.keys(voteCounts).length === 0) {
+        // NO VOTES - Selección aleatoria
+        const randomIndex = Math.floor(Math.random() * queue.length);
+        infectedCaptainId = queue[randomIndex].steamId;
+        selectionMethod = "random";
+        console.log("No votes cast for Infected captain, randomly selected");
+      } else {
+        const sorted = Object.entries(voteCounts).sort((a, b) => b[1] - a[1]);
+        const topVoteCount = sorted[0][1];
+        const tiedCandidates = sorted.filter(
+          ([_, count]) => count === topVoteCount
+        );
+
+        if (tiedCandidates.length > 1) {
+          // TIE - Selección aleatoria de los empatados
+          const randomIndex = Math.floor(Math.random() * tiedCandidates.length);
+          infectedCaptainId = tiedCandidates[randomIndex][0];
+          selectionMethod = "tie";
+          console.log(
+            "Vote tie for Infected captain, randomly selected from tied candidates"
+          );
+        } else {
+          infectedCaptainId = sorted[0][0];
+        }
+      }
+
+      // Actualizar método de selección
+      setCaptainSelectionMethod((prev) => ({
+        ...prev,
+        infected: selectionMethod,
+      }));
 
       const { data: stateData } = await supabase
         .from("match_state")
@@ -579,6 +743,39 @@ export const BetView: React.FC<BetViewProps> = () => {
       }
     } catch (error) {
       console.error("Error picking player:", error);
+    }
+  };
+
+  // Funciones de override admin
+  const forcePhaseTransition = async (
+    targetPhase: "VOTING" | "PICKING" | "READY"
+  ) => {
+    if (!isAdmin) return;
+
+    try {
+      const { data } = await supabase.from("match_state").select("id").single();
+      if (data) {
+        await supabase
+          .from("match_state")
+          .update({ phase: targetPhase })
+          .eq("id", data.id);
+      }
+    } catch (error) {
+      console.error("Error forcing phase transition:", error);
+    }
+  };
+
+  const handleAdminReset = async () => {
+    if (
+      !isAdmin ||
+      !confirm("¿Resetear toda la partida? Esto borrará todos los datos.")
+    )
+      return;
+
+    try {
+      await abortMatch("Admin ha reseteado la partida.");
+    } catch (error) {
+      console.error("Error resetting match:", error);
     }
   };
 
@@ -1126,6 +1323,45 @@ export const BetView: React.FC<BetViewProps> = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Admin Control Panel */}
+      {isAdmin && (
+        <div className="fixed bottom-4 right-4 border-2 border-yellow-500 bg-zinc-900/95 p-4 space-y-2 shadow-2xl z-50">
+          <div className="text-yellow-500 text-xs font-bold mb-3 tracking-widest">
+            ⚡ ADMIN CONTROLS
+          </div>
+
+          <button
+            onClick={() => forcePhaseTransition("VOTING")}
+            className="w-full py-2 bg-yellow-500 text-black text-[10px] font-black tracking-widest uppercase hover:bg-yellow-400 transition-all"
+          >
+            Force Start Voting
+          </button>
+
+          <button
+            onClick={() => forcePhaseTransition("PICKING")}
+            className="w-full py-2 bg-blue-500 text-white text-[10px] font-black tracking-widest uppercase hover:bg-blue-400 transition-all"
+          >
+            Skip to Picking
+          </button>
+
+          <button
+            onClick={() => forcePhaseTransition("READY")}
+            className="w-full py-2 bg-green-500 text-black text-[10px] font-black tracking-widest uppercase hover:bg-green-400 transition-all"
+          >
+            Skip to Ready
+          </button>
+
+          <div className="border-t border-yellow-500/30 my-2"></div>
+
+          <button
+            onClick={handleAdminReset}
+            className="w-full py-2 bg-red-500 text-white text-[10px] font-black tracking-widest uppercase hover:bg-red-400 transition-all"
+          >
+            Reset Match
+          </button>
         </div>
       )}
 
