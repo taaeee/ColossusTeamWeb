@@ -385,6 +385,13 @@ export const BetView: React.FC<BetViewProps> = () => {
   const handleLeaveQueue = async () => {
     if (!user || !isInQueue || !session) return;
 
+    // FIX #1: No permitir salir durante partida activa
+    if (matchState && matchState.phase !== "QUEUE") {
+      alert("No puedes salir de la cola durante una partida activa");
+      console.log("Leave blocked - active match in phase:", matchState.phase);
+      return;
+    }
+
     try {
       // Borramos basándonos en el user_id de supabase (seguro gracias a RLS)
       const { error } = await supabase
@@ -426,10 +433,20 @@ export const BetView: React.FC<BetViewProps> = () => {
   // 4. Lógica de transición de fases
   // Detectar cuando la cola se llena y transicionar a VOTING
   useEffect(() => {
+    // FIX #2: Logging extensivo para debugging
+    console.log("=== PHASE TRANSITION CHECK ===");
+    console.log("Queue length:", queue.length, "/ Max:", maxPlayers);
+    console.log("Current phase:", matchState?.phase);
+    console.log(
+      "Should transition?",
+      queue.length === maxPlayers && matchState?.phase === "QUEUE"
+    );
+
     if (queue.length === maxPlayers && matchState?.phase === "QUEUE") {
+      console.log("🚀 TRIGGERING TRANSITION TO VOTING");
       transitionToVoting();
     }
-  }, [queue.length, matchState?.phase]);
+  }, [queue.length, matchState?.phase, maxPlayers]);
 
   // Timer de votación
   useEffect(() => {
@@ -485,28 +502,38 @@ export const BetView: React.FC<BetViewProps> = () => {
 
   const transitionToInfectedVoting = async () => {
     try {
+      // FIX #3: Logging extensivo para debugging votos
+      console.log("=== TRANSITION TO INFECTED VOTING ===");
+      console.log("All votes:", votes);
+      console.log("UserID to SteamID mapping:", userIdToSteamId);
+      console.log("Queue:", queue);
+
       // Contar votos y determinar capitán Survivor con fallback
       const voteCounts: { [key: string]: number } = {};
       votes.forEach((vote) => {
+        console.log(
+          `  Vote: voter=${vote.voter_id} -> voted_for=${vote.voted_for_id}`
+        );
         voteCounts[vote.voted_for_id] =
           (voteCounts[vote.voted_for_id] || 0) + 1;
       });
+
+      console.log("Vote counts:", voteCounts);
 
       let survivorCaptainId: string;
       let selectionMethod: "voted" | "random" | "tie" = "voted";
 
       if (Object.keys(voteCounts).length === 0) {
         // NO VOTES - Selección aleatoria
-        // Necesitamos obtener un user_id aleatorio de la cola
+        console.log("⚠️ NO VOTES CAST - Using random selection");
         const randomIndex = Math.floor(Math.random() * queue.length);
         const randomPlayer = queue[randomIndex];
-        // Buscar el user_id de este jugador en lobby_queue usando el mapeo inverso
         const userId = Object.keys(userIdToSteamId).find(
           (uid) => userIdToSteamId[uid] === randomPlayer.steamId
         );
-        survivorCaptainId = userId || queue[randomIndex].steamId; // Fallback si falla
+        survivorCaptainId = userId || queue[randomIndex].steamId;
         selectionMethod = "random";
-        console.log("No votes cast for Survivor captain, randomly selected");
+        console.log("Random Survivor captain:", survivorCaptainId);
       } else {
         const sorted = Object.entries(voteCounts).sort((a, b) => b[1] - a[1]);
         const topVoteCount = sorted[0][1];
@@ -516,14 +543,25 @@ export const BetView: React.FC<BetViewProps> = () => {
 
         if (tiedCandidates.length > 1) {
           // TIE - Selección aleatoria de los empatados
+          console.log("⚠️ VOTE TIE - Breaking randomly");
           const randomIndex = Math.floor(Math.random() * tiedCandidates.length);
           survivorCaptainId = tiedCandidates[randomIndex][0];
           selectionMethod = "tie";
           console.log(
-            "Vote tie for Survivor captain, randomly selected from tied candidates"
+            "Tied candidates:",
+            tiedCandidates,
+            "Selected:",
+            survivorCaptainId
           );
         } else {
           survivorCaptainId = sorted[0][0];
+          console.log(
+            "✅ Voted Survivor captain:",
+            survivorCaptainId,
+            "with",
+            sorted[0][1],
+            "votes"
+          );
         }
       }
 
@@ -562,28 +600,37 @@ export const BetView: React.FC<BetViewProps> = () => {
 
   const transitionToPicking = async () => {
     try {
+      // FIX #3: Logging extensivo para debugging votos
+      console.log("=== TRANSITION TO PICKING ===");
+      console.log("All votes:", votes);
+      console.log("UserID to SteamID mapping:", userIdToSteamId);
+
       // Contar votos y determinar capitán Infected con fallback
       const voteCounts: { [key: string]: number } = {};
       votes.forEach((vote) => {
+        console.log(
+          `  Vote: voter=${vote.voter_id} -> voted_for=${vote.voted_for_id}`
+        );
         voteCounts[vote.voted_for_id] =
           (voteCounts[vote.voted_for_id] || 0) + 1;
       });
+
+      console.log("Vote counts:", voteCounts);
 
       let infectedCaptainId: string;
       let selectionMethod: "voted" | "random" | "tie" = "voted";
 
       if (Object.keys(voteCounts).length === 0) {
         // NO VOTES - Selección aleatoria
-        // Necesitamos obtener un user_id aleatorio de la cola
+        console.log("⚠️ NO VOTES CAST - Using random selection");
         const randomIndex = Math.floor(Math.random() * queue.length);
         const randomPlayer = queue[randomIndex];
-        // Buscar el user_id de este jugador en lobby_queue usando el mapeo inverso
         const userId = Object.keys(userIdToSteamId).find(
           (uid) => userIdToSteamId[uid] === randomPlayer.steamId
         );
-        infectedCaptainId = userId || queue[randomIndex].steamId; // Fallback si falla
+        infectedCaptainId = userId || queue[randomIndex].steamId;
         selectionMethod = "random";
-        console.log("No votes cast for Infected captain, randomly selected");
+        console.log("Random Infected captain:", infectedCaptainId);
       } else {
         const sorted = Object.entries(voteCounts).sort((a, b) => b[1] - a[1]);
         const topVoteCount = sorted[0][1];
@@ -593,14 +640,25 @@ export const BetView: React.FC<BetViewProps> = () => {
 
         if (tiedCandidates.length > 1) {
           // TIE - Selección aleatoria de los empatados
+          console.log("⚠️ VOTE TIE - Breaking randomly");
           const randomIndex = Math.floor(Math.random() * tiedCandidates.length);
           infectedCaptainId = tiedCandidates[randomIndex][0];
           selectionMethod = "tie";
           console.log(
-            "Vote tie for Infected captain, randomly selected from tied candidates"
+            "Tied candidates:",
+            tiedCandidates,
+            "Selected:",
+            infectedCaptainId
           );
         } else {
           infectedCaptainId = sorted[0][0];
+          console.log(
+            "✅ Voted Infected captain:",
+            infectedCaptainId,
+            "with",
+            sorted[0][1],
+            "votes"
+          );
         }
       }
 
@@ -727,10 +785,33 @@ export const BetView: React.FC<BetViewProps> = () => {
 
   // Función para seleccionar jugador (picking phase)
   const handlePick = async (playerId: string) => {
-    if (!session || !matchState) return;
-    if (matchState.current_picker_id !== session.user.id) return;
+    // FIX #5: Logging extensivo para debugging picking
+    console.log("=== HANDLE PICK ===");
+    console.log("Current user ID:", session?.user?.id);
+    console.log("Match state:", matchState);
+    console.log("Current picker ID:", matchState?.current_picker_id);
+    console.log(
+      "Is my turn?",
+      matchState?.current_picker_id === session?.user?.id
+    );
+    console.log("Player to pick (steamId):", playerId);
+    console.log("Current rosters:", rosters);
+
+    if (!session || !matchState) {
+      console.log("❌ No session or matchState");
+      return;
+    }
+
+    if (matchState.current_picker_id !== session.user.id) {
+      console.log("❌ Not your turn!");
+      console.log("  Expected:", matchState.current_picker_id);
+      console.log("  Your ID:", session.user.id);
+      return;
+    }
 
     const pickedCount = rosters.filter((r) => r.team).length;
+    console.log("Picked count:", pickedCount);
+
     let team: "SURVIVORS" | "INFECTED";
 
     // Determinar equipo según orden de draft: S(1) → I(2) → S(2) → I(1)
@@ -741,9 +822,14 @@ export const BetView: React.FC<BetViewProps> = () => {
       team = "SURVIVORS"; // S picks 2
     else team = "INFECTED"; // I picks 1
 
+    console.log("Assigning to team:", team);
+
     try {
       const player = queue.find((p) => p.steamId === playerId);
-      if (!player) return;
+      if (!player) {
+        console.log("❌ Player not found in queue");
+        return;
+      }
 
       // Buscar el user_id del jugador en lobby_queue
       const { data: playerData, error: lookupError } = await supabase
@@ -753,9 +839,11 @@ export const BetView: React.FC<BetViewProps> = () => {
         .single();
 
       if (lookupError || !playerData) {
-        console.error("Error finding player for picking:", lookupError);
+        console.error("❌ Error finding player for picking:", lookupError);
         return;
       }
+
+      console.log("✅ Found player user_id:", playerData.user_id);
 
       await supabase.from("match_rosters").insert({
         user_id: playerData.user_id,
@@ -800,16 +888,64 @@ export const BetView: React.FC<BetViewProps> = () => {
   ) => {
     if (!isAdmin) return;
 
+    // FIX #4: Assign random captains when skipping to PICKING/READY
+    console.log("=== ADMIN FORCE PHASE ===");
+    console.log("Target phase:", targetPhase);
+
     try {
-      const { data } = await supabase.from("match_state").select("id").single();
-      if (data) {
-        await supabase
-          .from("match_state")
-          .update({ phase: targetPhase })
-          .eq("id", data.id);
+      const { data } = await supabase.from("match_state").select("*").single();
+      if (!data) return;
+
+      let updates: any = { phase: targetPhase };
+
+      // If skipping to PICKING or READY, assign random captains
+      if (targetPhase === "PICKING" || targetPhase === "READY") {
+        if (queue.length >= 2) {
+          // Get 2 random players as captains
+          const shuffled = [...queue].sort(() => Math.random() - 0.5);
+          const survivor = shuffled[0];
+          const infected = shuffled[1];
+
+          // Find their user_ids
+          const survivorUserId = Object.keys(userIdToSteamId).find(
+            (uid) => userIdToSteamId[uid] === survivor.steamId
+          );
+          const infectedUserId = Object.keys(userIdToSteamId).find(
+            (uid) => userIdToSteamId[uid] === infected.steamId
+          );
+
+          updates.captain_survivor_id = survivorUserId;
+          updates.captain_infected_id = infectedUserId;
+
+          console.log("Assigned random captains:");
+          console.log(
+            "  Survivor:",
+            survivorUserId,
+            "(",
+            survivor.personaname,
+            ")"
+          );
+          console.log(
+            "  Infected:",
+            infectedUserId,
+            "(",
+            infected.personaname,
+            ")"
+          );
+
+          if (targetPhase === "PICKING") {
+            updates.current_picker_id = survivorUserId;
+            console.log("  Current picker:", survivorUserId);
+          }
+        } else {
+          console.warn("Not enough players in queue for captains");
+        }
       }
+
+      await supabase.from("match_state").update(updates).eq("id", data.id);
+      console.log("✅ Phase transition complete");
     } catch (error) {
-      console.error("Error forcing phase transition:", error);
+      console.error("❌ Error forcing phase transition:", error);
     }
   };
 
@@ -820,10 +956,51 @@ export const BetView: React.FC<BetViewProps> = () => {
     )
       return;
 
+    // FIX #4: Better cleanup logic
+    console.log("=== ADMIN RESET ===");
+
     try {
-      await abortMatch("Admin ha reseteado la partida.");
+      // 1. Clear all tables in correct order using gte instead of neq
+      console.log("Clearing match_rosters...");
+      await supabase
+        .from("match_rosters")
+        .delete()
+        .gte("id", "00000000-0000-0000-0000-000000000000");
+
+      console.log("Clearing match_votes...");
+      await supabase
+        .from("match_votes")
+        .delete()
+        .gte("id", "00000000-0000-0000-0000-000000000000");
+
+      console.log("Clearing lobby_queue...");
+      await supabase
+        .from("lobby_queue")
+        .delete()
+        .gte("id", "00000000-0000-0000-0000-000000000000");
+
+      // 2. Reset match_state
+      console.log("Resetting match_state...");
+      const { data } = await supabase.from("match_state").select("id").single();
+      if (data) {
+        await supabase
+          .from("match_state")
+          .update({
+            phase: "QUEUE",
+            voting_round: null,
+            captain_survivor_id: null,
+            captain_infected_id: null,
+            current_picker_id: null,
+            server_ip: null,
+          })
+          .eq("id", data.id);
+      }
+
+      console.log("✅ Admin reset complete");
+      alert("Partida reseteada exitosamente");
     } catch (error) {
-      console.error("Error resetting match:", error);
+      console.error("❌ Admin reset error:", error);
+      alert("Error al resetear: " + error);
     }
   };
 
