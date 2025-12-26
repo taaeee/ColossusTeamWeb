@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { MatchesList } from "./components/MatchesList";
 import { MemberCard } from "./components/MemberCard";
 import { AiAnalyst } from "./components/AiAnalyst";
-
 import { TournamentsList } from "./components/TournamentsList";
 import { TeamMember } from "./types";
 import { Menu, X, ChevronDown, ArrowRight, Server } from "lucide-react";
