@@ -527,15 +527,28 @@ export const BetView: React.FC<BetViewProps> = () => {
 
   const transitionToInfectedVoting = async () => {
     try {
-      // FIX #3: Logging extensivo para debugging votos
+      // FIX CRÍTICO: Fetch fresh votes from DB instead of using stale state from closure
       console.log("=== TRANSITION TO INFECTED VOTING ===");
-      console.log("All votes:", votes);
+      console.log("Fetching FRESH votes from database...");
+
+      const { data: freshVotes, error: votesError } = await supabase
+        .from("match_votes")
+        .select("*");
+
+      if (votesError) {
+        console.error("❌ Error fetching fresh votes:", votesError);
+        return;
+      }
+
+      const currentVotes = freshVotes || [];
+      console.log("Fresh votes count:", currentVotes.length);
+      console.log("All votes:", currentVotes);
       console.log("UserID to SteamID mapping:", userIdToSteamId);
       console.log("Queue:", queue);
 
       // Contar votos y determinar capitán Survivor con fallback
       const voteCounts: { [key: string]: number } = {};
-      votes.forEach((vote) => {
+      currentVotes.forEach((vote) => {
         console.log("Processing vote:", JSON.stringify(vote));
         console.log(`  voter_id: "${vote.voter_id}"`);
         console.log(`  voted_for_id: "${vote.voted_for_id}"`);
