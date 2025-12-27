@@ -160,7 +160,8 @@ export const BetView: React.FC<BetViewProps> = () => {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "match_votes" },
-        () => {
+        (payload) => {
+          console.log("🔔 Vote change detected:", payload.eventType);
           fetchVotes();
         }
       )
@@ -330,15 +331,20 @@ export const BetView: React.FC<BetViewProps> = () => {
 
   // Función para obtener los votos
   const fetchVotes = async () => {
+    console.log("🔍 Fetching votes from database...");
     const { data, error } = await supabase.from("match_votes").select("*");
 
     if (error) {
-      console.error("Error fetching votes:", error);
+      console.error("❌ Error fetching votes:", error);
       return;
     }
 
     if (data) {
+      console.log("✅ Votes fetched:", data.length, "votes");
+      console.log("   Data:", data);
       setVotes(data as Vote[]);
+    } else {
+      console.log("⚠️ No vote data returned");
     }
   };
 
