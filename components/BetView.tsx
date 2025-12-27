@@ -536,11 +536,15 @@ export const BetView: React.FC<BetViewProps> = () => {
       // Contar votos y determinar capitán Survivor con fallback
       const voteCounts: { [key: string]: number } = {};
       votes.forEach((vote) => {
-        console.log(
-          `  Vote: voter=${vote.voter_id} -> voted_for=${vote.voted_for_id}`
-        );
+        console.log("Processing vote:", JSON.stringify(vote));
+        console.log(`  voter_id: "${vote.voter_id}"`);
+        console.log(`  voted_for_id: "${vote.voted_for_id}"`);
+        console.log(`  Current voteCounts before:`, voteCounts);
+
         voteCounts[vote.voted_for_id] =
           (voteCounts[vote.voted_for_id] || 0) + 1;
+
+        console.log(`  Current voteCounts after:`, voteCounts);
       });
 
       console.log("Vote counts:", voteCounts);
