@@ -606,10 +606,12 @@ export const BetView: React.FC<BetViewProps> = () => {
       }
 
       // Limpiar votos para la siguiente ronda
+      console.log("Clearing Survivor voting round votes...");
       await supabase
         .from("match_votes")
         .delete()
         .neq("id", "00000000-0000-0000-0000-000000000000");
+      console.log("✅ Votes cleared for Infected voting round");
 
       setVotingTimeLeft(20);
     } catch (error) {
