@@ -472,15 +472,25 @@ export const BetView: React.FC<BetViewProps> = () => {
 
         if (secondsLeft === 0) {
           clearInterval(interval);
-          setTimeout(() => {
-            if (matchState.voting_round === "SURVIVOR") {
-              transitionToInfectedVoting();
-            } else {
-              transitionToPicking();
+          console.log("⏰ Timer expired, calling backend for transition...");
+
+          // Call Edge Function for server-side transition
+          (async () => {
+            try {
+              const { data, error } = await supabase.functions.invoke(
+                "voting-transition"
+              );
+              if (error) {
+                console.error("❌ Edge Function error:", error);
+              } else {
+                console.log("✅ Backend transition response:", data);
+              }
+            } catch (err) {
+              console.error("❌ Failed to call Edge Function:", err);
             }
-          }, 500);
+          })();
         }
-      }, 100);
+      }, 1000); // Check every second
       return () => clearInterval(interval);
     }
   }, [
