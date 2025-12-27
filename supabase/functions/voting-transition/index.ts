@@ -200,12 +200,21 @@ serve(async (req) => {
         .update({
           phase: "PICKING",
           captain_infected_id: infectedCaptainId,
-          current_picker_id: matchState.captain_survivor_id, // Survivor picks first
+          current_picker_id: matchState.captain_survivor_id,
           voting_end_time: null,
         })
         .eq("id", matchState.id);
 
+      // Clear any existing rosters before inserting captains
+      console.log("🧹 Clearing previous rosters...");
+      await supabase
+        .from("match_rosters")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+      console.log("✅ Rosters cleared");
+
       // Insert captains into rosters
+      console.log("📋 Inserting captains into rosters...");
       const survivorCaptain = queue.find(
         (p) => p.user_id === matchState.captain_survivor_id
       );
@@ -213,22 +222,41 @@ serve(async (req) => {
         (p) => p.user_id === infectedCaptainId
       );
 
+      console.log("Survivor captain data:", survivorCaptain);
+      console.log("Infected captain data:", infectedCaptain);
+
       if (survivorCaptain) {
-        await supabase.from("match_rosters").insert({
-          steam_id: survivorCaptain.steam_id,
-          nickname: survivorCaptain.nickname,
-          team: "SURVIVOR",
-          pick_order: 0,
-        });
+        const { error: survivorError } = await supabase
+          .from("match_rosters")
+          .insert({
+            user_id: survivorCaptain.user_id,
+            steam_id: survivorCaptain.steam_id,
+            nickname: survivorCaptain.nickname,
+            avatar_url: survivorCaptain.avatar_url,
+            team: "SURVIVORS",
+          });
+        if (survivorError) {
+          console.error("❌ Error inserting survivor captain:", survivorError);
+        } else {
+          console.log("✅ Survivor captain inserted");
+        }
       }
 
       if (infectedCaptain) {
-        await supabase.from("match_rosters").insert({
-          steam_id: infectedCaptain.steam_id,
-          nickname: infectedCaptain.nickname,
-          team: "INFECTED",
-          pick_order: 0,
-        });
+        const { error: infectedError } = await supabase
+          .from("match_rosters")
+          .insert({
+            user_id: infectedCaptain.user_id,
+            steam_id: infectedCaptain.steam_id,
+            nickname: infectedCaptain.nickname,
+            avatar_url: infectedCaptain.avatar_url,
+            team: "INFECTED",
+          });
+        if (infectedError) {
+          console.error("❌ Error inserting infected captain:", infectedError);
+        } else {
+          console.log("✅ Infected captain inserted");
+        }
       }
 
       console.log("✅ Transitioned to PICKING phase");
