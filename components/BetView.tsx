@@ -367,22 +367,25 @@ export const BetView: React.FC<BetViewProps> = () => {
   const isInQueue = user && queue.some((p) => p.steamId === user.steamId);
   const isFull = queue.length >= MAX_PLAYERS;
 
-  // 3. Acciones del Usuario
   const handleJoinQueue = async () => {
     if (!user || isInQueue || isFull || !session) return;
     setIsJoining(true);
 
     try {
-      const { error } = await supabase.from("lobby_queue").insert({
-        user_id: session.user.id, // ID interno de Supabase para RLS
-        steam_id: user.steamId,
-        nickname: user.personaname,
-        avatar_url: user.avatarfull,
-      });
+      // Use upsert to prevent duplicates
+      const { error } = await supabase.from("lobby_queue").upsert(
+        {
+          user_id: session.user.id, // ID interno de Supabase para RLS
+          steam_id: user.steamId,
+          nickname: user.personaname,
+          avatar_url: user.avatarfull,
+        },
+        {
+          onConflict: "steam_id", // Upsert based on steam_id
+        }
+      );
 
       if (error) throw error;
-      // No necesitamos actualizar 'queue' manualmente aquí,
-      // el evento Realtime disparará fetchQueue() automáticamente.
     } catch (error: any) {
       console.error("Error uniéndose:", error.message);
       alert("Error al unirse: " + error.message);
@@ -1439,58 +1442,76 @@ export const BetView: React.FC<BetViewProps> = () => {
                   <img
                     src={
                       queue.find((p) => {
-                        // Find player by checking their user_id in lobby_queue
-                        const queuePlayer = queue.find(
-                          (q) => q.steamId === p.steamId
-                        );
-                        return matchState.captain_survivor_id && queuePlayer;
+                        // FIX: Correctly find captain using userIdToSteamId mapping
+                        const captainSteamId =
+                          userIdToSteamId[matchState.captain_survivor_id!];
+                        return p.steamId === captainSteamId;
                       })?.avatarfull || ""
                     }
                     alt="Captain"
                     className="w-10 h-10 border border-green-500/50"
                   />
-                  <span className="text-white font-bold">Survivor Captain</span>
+                  <span className="text-white font-bold">
+                    {queue.find((p) => {
+                      const captainSteamId =
+                        userIdToSteamId[matchState.captain_survivor_id!];
+                      return p.steamId === captainSteamId;
+                    })?.personaname || "Survivor Captain"}
+                  </span>
                 </div>
               </div>
             )}
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {queue.map((player, index) => {
-              // Contar votos para ESTE jugador específico usando el mapeo
-              const voteCount = votes.filter((v) => {
-                // v.voted_for_id es un user_id, necesitamos convertirlo a steam_id
-                const votedForSteamId = userIdToSteamId[v.voted_for_id];
-                return votedForSteamId === player.steamId;
-              }).length;
+            {queue
+              .filter((player) => {
+                // FIX: No mostrar al capitán ya seleccionado en segunda ronda
+                if (
+                  matchState.voting_round === "INFECTED" &&
+                  matchState.captain_survivor_id
+                ) {
+                  const captainSteamId =
+                    userIdToSteamId[matchState.captain_survivor_id];
+                  return player.steamId !== captainSteamId;
+                }
+                return true;
+              })
+              .map((player, index) => {
+                // Contar votos para ESTE jugador específico usando el mapeo
+                const voteCount = votes.filter((v) => {
+                  // v.voted_for_id es un user_id, necesitamos convertirlo a steam_id
+                  const votedForSteamId = userIdToSteamId[v.voted_for_id];
+                  return votedForSteamId === player.steamId;
+                }).length;
 
-              return (
-                <div
-                  key={index}
-                  className="relative border border-white/20 bg-zinc-900/40 p-4 flex flex-col items-center gap-2"
-                >
-                  <img
-                    src={player.avatarfull}
-                    className="w-16 h-16 border border-white/10"
-                    alt={player.personaname}
-                  />
-                  <div className="text-[10px] font-bold text-white uppercase text-center truncate w-full">
-                    {player.personaname}
-                  </div>
-                  {voteCount > 0 && (
-                    <div className="text-xs text-yellow-500 font-mono">
-                      {voteCount} votes
-                    </div>
-                  )}
-                  <button
-                    onClick={() => handleVote(player.steamId)}
-                    disabled={!session}
-                    className="w-full py-1 bg-yellow-500 text-black text-[8px] font-black tracking-widest uppercase hover:bg-yellow-400 transition-all disabled:opacity-50"
+                return (
+                  <div
+                    key={index}
+                    className="relative border border-white/20 bg-zinc-900/40 p-4 flex flex-col items-center gap-2"
                   >
-                    VOTE
-                  </button>
-                </div>
-              );
-            })}
+                    <img
+                      src={player.avatarfull}
+                      className="w-16 h-16 border border-white/10"
+                      alt={player.personaname}
+                    />
+                    <div className="text-[10px] font-bold text-white uppercase text-center truncate w-full">
+                      {player.personaname}
+                    </div>
+                    {voteCount > 0 && (
+                      <div className="text-xs text-yellow-500 font-mono">
+                        {voteCount} votes
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handleVote(player.steamId)}
+                      disabled={!session}
+                      className="w-full py-1 bg-yellow-500 text-black text-[8px] font-black tracking-widest uppercase hover:bg-yellow-400 transition-all disabled:opacity-50"
+                    >
+                      VOTE
+                    </button>
+                  </div>
+                );
+              })}
           </div>
         </div>
       )}
