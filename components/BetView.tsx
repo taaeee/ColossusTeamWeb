@@ -474,27 +474,44 @@ export const BetView: React.FC<BetViewProps> = () => {
   // Funciones de transición
   const transitionToVoting = async () => {
     try {
-      // Actualizar estado a VOTING - Ronda SURVIVOR
+      console.log("=== TRANSITION TO VOTING ===");
+
       const { data: stateData } = await supabase
         .from("match_state")
         .select("id")
         .single();
 
       if (stateData) {
+        // IMPORTANTE: Limpiar TODOS los datos de match anteriores
+        console.log("Cleaning previous match data...");
+
+        // Limpiar rosters
+        await supabase
+          .from("match_rosters")
+          .delete()
+          .neq("id", "00000000-0000-0000-0000-000000000000");
+        console.log("✅ Rosters cleared");
+
+        // Limpiar votos
+        await supabase
+          .from("match_votes")
+          .delete()
+          .neq("id", "00000000-0000-0000-0000-000000000000");
+        console.log("✅ Votes cleared");
+
+        // Resetear match_state completamente
         await supabase
           .from("match_state")
           .update({
             phase: "VOTING",
             voting_round: "SURVIVOR",
+            captain_survivor_id: null,
+            captain_infected_id: null,
+            current_picker_id: null,
           })
           .eq("id", stateData.id);
+        console.log("✅ Match state reset for voting");
       }
-
-      // Limpiar votos anteriores
-      await supabase
-        .from("match_votes")
-        .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000");
 
       setVotingTimeLeft(20);
     } catch (error) {
@@ -804,6 +821,10 @@ export const BetView: React.FC<BetViewProps> = () => {
   const handleVote = async (playerSteamId: string) => {
     if (!session) return;
 
+    console.log("=== HANDLE VOTE ===");
+    console.log("Voting for player (steamId):", playerSteamId);
+    console.log("Current voting round:", matchState?.voting_round);
+
     try {
       // Buscar el user_id del jugador votado en la tabla lobby_queue
       const { data: playerData, error: lookupError } = await supabase
@@ -813,9 +834,11 @@ export const BetView: React.FC<BetViewProps> = () => {
         .single();
 
       if (lookupError || !playerData) {
-        console.error("Error finding player:", lookupError);
+        console.error("❌ Error finding player:", lookupError);
         return;
       }
+
+      console.log("✅ Found player user_id:", playerData.user_id);
 
       // Eliminar voto anterior si existe
       await supabase
@@ -828,8 +851,10 @@ export const BetView: React.FC<BetViewProps> = () => {
         voter_id: session.user.id,
         voted_for_id: playerData.user_id,
       });
+
+      console.log("✅ Vote registered successfully");
     } catch (error) {
-      console.error("Error voting:", error);
+      console.error("❌ Error voting:", error);
     }
   };
 
@@ -947,6 +972,31 @@ export const BetView: React.FC<BetViewProps> = () => {
       if (!data) return;
 
       let updates: any = { phase: targetPhase };
+
+      // Limpiar datos si se fuerza VOTING
+      if (targetPhase === "VOTING") {
+        console.log("Cleaning data for forced VOTING phase...");
+
+        // Limpiar rosters
+        await supabase
+          .from("match_rosters")
+          .delete()
+          .neq("id", "00000000-0000-0000-0000-000000000000");
+
+        // Limpiar votos
+        await supabase
+          .from("match_votes")
+          .delete()
+          .neq("id", "00000000-0000-0000-0000-000000000000");
+
+        // Resetear captain IDs
+        updates.voting_round = "SURVIVOR";
+        updates.captain_survivor_id = null;
+        updates.captain_infected_id = null;
+        updates.current_picker_id = null;
+
+        console.log("✅ Data cleaned for VOTING");
+      }
 
       // Solo asignar capitanes aleatorios al saltar a PICKING
       if (targetPhase === "PICKING") {
