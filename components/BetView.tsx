@@ -29,6 +29,7 @@ interface MatchState {
   captain_infected_id?: string;
   current_picker_id?: string;
   server_ip?: string;
+  voting_end_time?: string; // Timestamp para sincronizar timer entre clientes
   updated_at?: string;
 }
 
@@ -456,26 +457,34 @@ export const BetView: React.FC<BetViewProps> = () => {
     }
   }, [queue.length, matchState?.phase, MAX_PLAYERS]);
 
-  // Timer de votación
+  // Timer de votación - sincronizado con timestamp
   useEffect(() => {
-    if (matchState?.phase === "VOTING") {
+    if (matchState?.phase === "VOTING" && matchState.voting_end_time) {
       const interval = setInterval(() => {
-        setVotingTimeLeft((prev) => {
-          if (prev <= 1) {
-            // Se acabó el tiempo
+        const now = Date.now();
+        const endTime = new Date(matchState.voting_end_time!).getTime();
+        const secondsLeft = Math.max(0, Math.floor((endTime - now) / 1000));
+
+        setVotingTimeLeft(secondsLeft);
+
+        if (secondsLeft === 0) {
+          clearInterval(interval);
+          setTimeout(() => {
             if (matchState.voting_round === "SURVIVOR") {
               transitionToInfectedVoting();
             } else {
               transitionToPicking();
             }
-            return 20;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+          }, 500);
+        }
+      }, 100);
       return () => clearInterval(interval);
     }
-  }, [matchState?.phase, matchState?.voting_round]);
+  }, [
+    matchState?.phase,
+    matchState?.voting_end_time,
+    matchState?.voting_round,
+  ]);
 
   // Funciones de transición
   const transitionToVoting = async () => {
@@ -505,7 +514,8 @@ export const BetView: React.FC<BetViewProps> = () => {
           .neq("id", "00000000-0000-0000-0000-000000000000");
         console.log("✅ Votes cleared");
 
-        // Resetear match_state completamente
+        // Resetear match_state completamente y establecer timestamp de fin de votación
+        const votingEndTime = new Date(Date.now() + 20000).toISOString(); // 20 segundos
         await supabase
           .from("match_state")
           .update({
@@ -514,9 +524,11 @@ export const BetView: React.FC<BetViewProps> = () => {
             captain_survivor_id: null,
             captain_infected_id: null,
             current_picker_id: null,
+            voting_end_time: votingEndTime,
           })
           .eq("id", stateData.id);
         console.log("✅ Match state reset for voting");
+        console.log("⏰ Voting will end at:", votingEndTime);
       }
 
       setVotingTimeLeft(20);
@@ -619,13 +631,19 @@ export const BetView: React.FC<BetViewProps> = () => {
         .single();
 
       if (stateData) {
+        // Establecer timestamp para la segunda ronda de votación
+        const votingEndTime = new Date(Date.now() + 20000).toISOString();
+
         await supabase
           .from("match_state")
           .update({
             voting_round: "INFECTED",
             captain_survivor_id: survivorCaptainId,
+            voting_end_time: votingEndTime,
           })
           .eq("id", stateData.id);
+
+        console.log("⏰ Infected voting will end at:", votingEndTime);
       }
 
       // Limpiar votos para la siguiente ronda
@@ -1027,13 +1045,16 @@ export const BetView: React.FC<BetViewProps> = () => {
           .delete()
           .neq("id", "00000000-0000-0000-0000-000000000000");
 
-        // Resetear captain IDs
+        // Resetear captain IDs y establecer timestamp
+        const votingEndTime = new Date(Date.now() + 20000).toISOString();
         updates.voting_round = "SURVIVOR";
         updates.captain_survivor_id = null;
         updates.captain_infected_id = null;
         updates.current_picker_id = null;
+        updates.voting_end_time = votingEndTime;
 
         console.log("✅ Data cleaned for VOTING");
+        console.log("⏰ Voting will end at:", votingEndTime);
       }
 
       // Solo asignar capitanes aleatorios al saltar a PICKING
