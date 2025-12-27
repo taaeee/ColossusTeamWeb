@@ -52,7 +52,7 @@ interface BetViewProps {}
 
 export const BetView: React.FC<BetViewProps> = () => {
   // Configuración de jugadores máximos
-  const MAX_PLAYERS = 2;
+  const MAX_PLAYERS = 8;
 
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<SteamUser | null>(null);
