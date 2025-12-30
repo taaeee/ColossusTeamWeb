@@ -1020,7 +1020,7 @@ export const BetView: React.FC<BetViewProps> = () => {
       }
 
       // Si completamos todos los picks, transicionar a READY
-      if (pickedCount >= 7) {
+      if (pickedCount >= 1) {
         transitionToReady();
       }
     } catch (error) {
