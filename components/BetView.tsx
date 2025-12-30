@@ -882,6 +882,7 @@ export const BetView: React.FC<BetViewProps> = () => {
       }
 
       setServerIP(serverIp);
+      console.log("Server IP set to:", serverIp);
     } catch (error) {
       console.error("Error transitioning to ready:", error);
     }
@@ -1661,8 +1662,8 @@ export const BetView: React.FC<BetViewProps> = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Final Survivors Team */}
-            <div className="border-2 border-green-500/50 bg-green-500/5 p-6">
-              <h3 className="text-2xl font-black text-green-500 uppercase mb-6 text-center">
+            <div className="border-2 border-cyan-500/50 bg-cyan-500/5 p-6">
+              <h3 className="text-2xl font-black text-cyan-500 uppercase mb-6 text-center">
                 SURVIVORS
               </h3>
               <div className="space-y-3">
@@ -1671,11 +1672,11 @@ export const BetView: React.FC<BetViewProps> = () => {
                   .map((player) => (
                     <div
                       key={player.id}
-                      className="flex items-center gap-4 p-3 bg-zinc-900/70 border border-green-500/30"
+                      className="flex items-center gap-4 p-3 bg-zinc-900/70 border border-cyan-500/30"
                     >
                       <img
                         src={player.avatar_url}
-                        className="w-14 h-14 border-2 border-green-500/50"
+                        className="w-14 h-14 border-2 border-cyan-500/50"
                         alt={player.nickname}
                       />
                       <div className="flex-1">
