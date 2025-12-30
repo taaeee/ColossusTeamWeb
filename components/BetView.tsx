@@ -425,7 +425,7 @@ export const BetView: React.FC<BetViewProps> = () => {
       // Find user_id from steam_id
       const { data: playerData, error: lookupError } = await supabase
         .from("lobby_queue")
-        .select("user_id, nickname")
+        .select("user_id")
         .eq("steam_id", steamId)
         .single();
 
@@ -443,7 +443,7 @@ export const BetView: React.FC<BetViewProps> = () => {
 
       if (error) throw error;
 
-      console.log(`Admin kicked player: ${playerData.nickname}`);
+      console.log(`Admin kicked player: ${playerData.user_id}`);
     } catch (error: any) {
       console.error("Error kicking player:", error.message);
       alert("Error al expulsar jugador: " + error.message);
