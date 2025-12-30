@@ -863,7 +863,8 @@ export const BetView: React.FC<BetViewProps> = () => {
       // Obtener IP del servidor
       const response = await fetch("/api/server-status");
       const data = await response.json();
-      const serverIp = `${data.address}:${data.port}` || "";
+      const serverIp =
+        `${data.address}:${data.port.toString()}` || "54.209.216.171:27015";
 
       const { data: stateData } = await supabase
         .from("match_state")
