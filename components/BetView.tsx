@@ -10,6 +10,7 @@ import {
   UserPlus,
   UserMinus,
   Terminal,
+  X,
 } from "lucide-react";
 
 // Tipos adaptados para mantener compatibilidad con tu UI
@@ -417,6 +418,38 @@ export const BetView: React.FC<BetViewProps> = () => {
     }
   };
 
+  const handleAdminKick = async (steamId: string) => {
+    if (!isAdmin || !confirm("¿Expulsar este jugador de la cola?")) return;
+
+    try {
+      // Find user_id from steam_id
+      const { data: playerData, error: lookupError } = await supabase
+        .from("lobby_queue")
+        .select("user_id, nickname")
+        .eq("steam_id", steamId)
+        .single();
+
+      if (lookupError || !playerData) {
+        console.error("Error finding player:", lookupError);
+        alert("Error al encontrar el jugador");
+        return;
+      }
+
+      // Remove from queue
+      const { error } = await supabase
+        .from("lobby_queue")
+        .delete()
+        .eq("steam_id", steamId);
+
+      if (error) throw error;
+
+      console.log(`Admin kicked player: ${playerData.nickname}`);
+    } catch (error: any) {
+      console.error("Error kicking player:", error.message);
+      alert("Error al expulsar jugador: " + error.message);
+    }
+  };
+
   const handleLogin = () => {
     // IMPORTANTE: Asegúrate de que esta URL sea la correcta de tu Edge Function pública
     // y que tengas configurada la redirect URL a localhost o tu dominio en Supabase
@@ -426,6 +459,14 @@ export const BetView: React.FC<BetViewProps> = () => {
   };
 
   const handleLogout = async () => {
+    // Prevent logout during active match phases
+    if (matchState && matchState.phase !== "QUEUE") {
+      alert(
+        "No puedes hacer logout durante una partida activa (votación, selección o juego)"
+      );
+      return;
+    }
+
     // First, remove user from queue if they're in it
     if (isInQueue && session) {
       try {
@@ -1404,6 +1445,16 @@ export const BetView: React.FC<BetViewProps> = () => {
                         <div className="absolute top-2 left-2 text-[8px] text-zinc-700 font-mono">
                           0{index + 1}
                         </div>
+                        {/* Admin Kick Button */}
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleAdminKick(player.steamId)}
+                            className="absolute top-2 right-2 p-1 bg-red-500/80 hover:bg-red-500 text-white rounded transition-all"
+                            title="Expulsar jugador"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
                       </>
                     ) : (
                       <>
@@ -1747,43 +1798,46 @@ export const BetView: React.FC<BetViewProps> = () => {
               >
                 🎮 CONNECT TO SERVER
               </button>
-              <button
-                onClick={async () => {
-                  // Reset match
-                  await supabase
-                    .from("match_rosters")
-                    .delete()
-                    .neq("id", "00000000-0000-0000-0000-000000000000");
-                  await supabase
-                    .from("match_votes")
-                    .delete()
-                    .neq("id", "00000000-0000-0000-0000-000000000000");
-                  await supabase
-                    .from("lobby_queue")
-                    .delete()
-                    .neq("id", "00000000-0000-0000-0000-000000000000");
-                  const { data } = await supabase
-                    .from("match_state")
-                    .select("id")
-                    .single();
-                  if (data) {
+              {/* Admin-only NEW MATCH button */}
+              {isAdmin && (
+                <button
+                  onClick={async () => {
+                    // Reset match
                     await supabase
+                      .from("match_rosters")
+                      .delete()
+                      .neq("id", "00000000-0000-0000-0000-000000000000");
+                    await supabase
+                      .from("match_votes")
+                      .delete()
+                      .neq("id", "00000000-0000-0000-0000-000000000000");
+                    await supabase
+                      .from("lobby_queue")
+                      .delete()
+                      .neq("id", "00000000-0000-0000-0000-000000000000");
+                    const { data } = await supabase
                       .from("match_state")
-                      .update({
-                        phase: "QUEUE",
-                        voting_round: null,
-                        captain_survivor_id: null,
-                        captain_infected_id: null,
-                        current_picker_id: null,
-                        server_ip: null,
-                      })
-                      .eq("id", data.id);
-                  }
-                }}
-                className="px-8 py-4 border-2 border-white/20 text-white text-sm font-black tracking-widest uppercase hover:bg-white/10 transition-all"
-              >
-                🔄 NEW MATCH
-              </button>
+                      .select("id")
+                      .single();
+                    if (data) {
+                      await supabase
+                        .from("match_state")
+                        .update({
+                          phase: "QUEUE",
+                          voting_round: null,
+                          captain_survivor_id: null,
+                          captain_infected_id: null,
+                          current_picker_id: null,
+                          server_ip: null,
+                        })
+                        .eq("id", data.id);
+                    }
+                  }}
+                  className="px-8 py-4 border-2 border-white/20 text-white text-sm font-black tracking-widest uppercase hover:bg-white/10 transition-all"
+                >
+                  🔄 NEW MATCH
+                </button>
+              )}
             </div>
           </div>
         </div>
