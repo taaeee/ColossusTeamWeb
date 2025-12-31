@@ -429,6 +429,7 @@ export const BetView: React.FC<BetViewProps> = () => {
         .eq("steam_id", steamId)
         .single();
 
+      console.log("Jugador encontrado:", playerData);
       if (lookupError || !playerData) {
         console.error("Error finding player:", lookupError);
         alert("Error al encontrar el jugador");
