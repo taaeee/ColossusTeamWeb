@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 // Asegúrate de que este import apunte a tu configuración real de Supabase
 import { supabase } from "@/services/supabaseClient";
 import { Session } from "@supabase/supabase-js";
+import { steamId64ToSteamId2 } from "@/lib/steamIdConverter";
 import {
   ShieldCheck,
   Users,
@@ -196,10 +197,12 @@ export const BetView: React.FC<BetViewProps> = () => {
         return;
       }
 
+      const steamId2 = steamId64ToSteamId2(user.steamId);
+
       const { data, error } = await supabase
         .from("admins")
         .select("steam_id")
-        .eq("steam_id", user.steamId)
+        .eq("steam_id", steamId2)
         .single();
 
       if (error) {
@@ -877,7 +880,7 @@ export const BetView: React.FC<BetViewProps> = () => {
         if (survivorCaptain) {
           await supabase.from("match_rosters").insert({
             user_id: stateData.captain_survivor_id,
-            steam_id: survivorCaptain.steamId,
+            steam_id: steamId64ToSteamId2(survivorCaptain.steamId),
             nickname: survivorCaptain.personaname,
             avatar_url: survivorCaptain.avatarfull,
             team: "SURVIVORS",
@@ -890,7 +893,7 @@ export const BetView: React.FC<BetViewProps> = () => {
         if (infectedCaptain) {
           await supabase.from("match_rosters").insert({
             user_id: infectedCaptainId,
-            steam_id: infectedCaptain.steamId,
+            steam_id: steamId64ToSteamId2(infectedCaptain.steamId),
             nickname: infectedCaptain.personaname,
             avatar_url: infectedCaptain.avatarfull,
             team: "INFECTED",
@@ -1051,7 +1054,7 @@ export const BetView: React.FC<BetViewProps> = () => {
 
       await supabase.from("match_rosters").insert({
         user_id: playerData.user_id,
-        steam_id: player.steamId,
+        steam_id: steamId64ToSteamId2(player.steamId),
         nickname: player.personaname,
         avatar_url: player.avatarfull,
         team,
@@ -1205,7 +1208,7 @@ export const BetView: React.FC<BetViewProps> = () => {
         if (survivorCaptain) {
           await supabase.from("match_rosters").insert({
             user_id: updates.captain_survivor_id,
-            steam_id: survivorCaptain.steamId,
+            steam_id: steamId64ToSteamId2(survivorCaptain.steamId),
             nickname: survivorCaptain.personaname,
             avatar_url: survivorCaptain.avatarfull,
             team: "SURVIVORS",
@@ -1216,7 +1219,7 @@ export const BetView: React.FC<BetViewProps> = () => {
         if (infectedCaptain) {
           await supabase.from("match_rosters").insert({
             user_id: updates.captain_infected_id,
-            steam_id: infectedCaptain.steamId,
+            steam_id: steamId64ToSteamId2(infectedCaptain.steamId),
             nickname: infectedCaptain.personaname,
             avatar_url: infectedCaptain.avatarfull,
             team: "INFECTED",
