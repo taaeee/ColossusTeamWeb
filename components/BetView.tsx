@@ -913,6 +913,10 @@ export const BetView: React.FC<BetViewProps> = () => {
       const serverIp =
         `${data.address}:${data.port.toString()}` || "54.209.216.171:27015";
 
+      // Generar UUID único para el match (para integración con servidor)
+      const matchId = crypto.randomUUID();
+      console.log("Generated match ID for server:", matchId);
+
       const { data: stateData } = await supabase
         .from("match_state")
         .select("id")
@@ -924,12 +928,19 @@ export const BetView: React.FC<BetViewProps> = () => {
           .update({
             phase: "READY",
             server_ip: serverIp,
+            server_match_id: matchId,
           })
           .eq("id", stateData.id);
       }
 
       setServerIP(serverIp);
       console.log("Server IP set to:", serverIp);
+
+      // Mostrar comando para ejecutar en el servidor
+      console.log("=".repeat(60));
+      console.log("EJECUTA EL SIGUIENTE COMANDO EN EL SERVIDOR:");
+      console.log(`sm_startmatch ${matchId}`);
+      console.log("=".repeat(60));
     } catch (error) {
       console.error("Error transitioning to ready:", error);
     }
@@ -1784,6 +1795,38 @@ export const BetView: React.FC<BetViewProps> = () => {
               </div>
             </div>
           </div>
+
+          {/* Server Command Info - Solo para admins */}
+          {isAdmin && matchState.server_match_id && (
+            <div className="border-2 border-yellow-500/50 bg-yellow-500/5 p-6">
+              <div className="text-center mb-4">
+                <div className="text-yellow-500 text-sm font-bold uppercase tracking-widest mb-2">
+                  ⚡ COMANDO DEL SERVIDOR
+                </div>
+                <div className="text-[10px] text-zinc-500 tracking-widest">
+                  EJECUTA ESTO EN LA CONSOLA DEL SERVIDOR L4D2
+                </div>
+              </div>
+              <div className="bg-black/50 border border-yellow-500/30 p-4 font-mono text-center">
+                <div className="text-yellow-400 text-lg select-all">
+                  sm_startmatch {matchState.server_match_id}
+                </div>
+              </div>
+              <div className="text-center mt-4">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `sm_startmatch ${matchState.server_match_id}`
+                    );
+                    alert("Comando copiado al portapapeles!");
+                  }}
+                  className="px-6 py-2 bg-yellow-500 text-black text-xs font-black tracking-widest uppercase hover:bg-yellow-400 transition-all"
+                >
+                  📋 COPIAR COMANDO
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Server Info */}
           <div className="border-2 border-white/30 bg-zinc-900/50 p-8 text-center">
