@@ -422,29 +422,34 @@ export const BetView: React.FC<BetViewProps> = () => {
     if (!isAdmin || !confirm("¿Expulsar este jugador de la cola?")) return;
 
     try {
-      // Find user_id from steam_id
-      const { data: playerData, error: lookupError } = await supabase
-        .from("lobby_queue")
-        .select("user_id")
-        .eq("steam_id", steamId)
-        .single();
+      console.log("Calling kick_player_from_queue function for:", steamId);
 
-      console.log("Jugador encontrado:", playerData);
-      if (lookupError || !playerData) {
-        console.error("Error finding player:", lookupError);
-        alert("Error al encontrar el jugador");
+      // Call the Postgres function that has elevated privileges
+      const { data, error } = await supabase.rpc("kick_player_from_queue", {
+        target_steam_id: steamId,
+      });
+
+      console.log("Function result:", data);
+      console.log("Function error:", error);
+
+      if (error) {
+        console.error("Error calling function:", error);
+        throw error;
+      }
+
+      if (data && !data.success) {
+        console.error("Function returned error:", data.error);
+        alert("Error: " + data.error);
         return;
       }
 
-      // Remove from queue
-      const { error } = await supabase
-        .from("lobby_queue")
-        .delete()
-        .eq("steam_id", steamId);
+      if (data && data.deleted_count === 0) {
+        alert("El jugador ya no está en la cola");
+        return;
+      }
 
-      if (error) throw error;
-
-      console.log(`Admin kicked player: ${playerData.user_id}`);
+      console.log("✅ Player kicked successfully");
+      alert("Jugador expulsado exitosamente");
     } catch (error: any) {
       console.error("Error kicking player:", error.message);
       alert("Error al expulsar jugador: " + error.message);
